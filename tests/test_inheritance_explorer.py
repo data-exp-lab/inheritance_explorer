@@ -1,24 +1,19 @@
-#!/usr/bin/env python
-
-"""Tests for `inheritance_explorer` package."""
-
-import pytest
+from inheritance_explorer.inheritance_explorer import ChildNode, ClassGraphTree
+from inheritance_explorer.similarity import PycodeSimilarity
+from inheritance_explorer._testing import ClassForTesting
 
 
-from inheritance_explorer import inheritance_explorer
+def test_child():
+    child_class = ChildNode
+    node = ChildNode(child_class, 1)
+    assert(type(node.child_id) == str)
 
 
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
+def test_class_graph():
 
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
+    # map out the structure of SimilarityContainer, track the run method
+    cgt = ClassGraphTree(ClassForTesting, "use_this_func")
+    assert(cgt._node_list[1].parent_id == "1")
+    c = cgt.check_source_similarity()
+    assert(isinstance(c, PycodeSimilarity))
+    assert(c.results._3.similarity_fraction < 1.0)

@@ -5,6 +5,8 @@ import inspect
 from graphviz import Digraph
 from typing import Optional, Any
 import textwrap
+from inheritance_explorer.similarity import PycodeSimilarity
+
 
 class ChildNode:
 
@@ -64,12 +66,12 @@ class ClassGraphTree:
         self.dot = Digraph(**kwargs)
         self._nodenum: int = 0
         self._node_list = []  # a list of unique ChildNodes
-        self._override_src = collections.OrderedDict()  # maps a node to the sourcecode of funcname if it overrides
+        self._override_src = []
         self._current_node = 1  # the current global node, must start at 1
         self._default_color = default_color
         self._override_color = func_override_color
+        self.similarity_container = None
         self.build()
-        self.similarity_container
 
     def _get_source_info(self, obj) -> Optional[str]:
         f = getattr(obj, self.funcname)
@@ -118,10 +120,22 @@ class ClassGraphTree:
         f = getattr(clss, self.funcname)
         if isinstance(f, collections.abc.Callable):
             src = textwrap.dedent(inspect.getsource(f))
-            self._override_src[current_node] = src
+            self._override_src.append((f"_{current_node}", src))
 
-    def _check_source_similarity(self):
-        self.similarity_container.run(self._override_src)
+    def check_source_similarity(self,
+                                SimilarityContainer=PycodeSimilarity,
+                                method="reference",
+                                reference=None):
+
+        if reference is None:
+            reference = "_1"  # use whatever the basenode is
+        if type(reference)==int:
+            reference = f"_{reference}"
+
+        self.similarity_container = SimilarityContainer()
+        self.similarity_container.run(self._override_src,
+                                      reference=reference)
+        return self.similarity_container
 
     def build(self):
 
@@ -135,8 +149,7 @@ class ClassGraphTree:
         _ = self.check_subclasses(self.baseclass, self._current_node - 1,
                                   self._current_node)
 
-        # now process source files for similarity
-        self._check_source_similarity()
+
 
         # finally build the graph
         for node in self._node_list:

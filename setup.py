@@ -10,7 +10,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ["graphviz", "pycode_similar"]
+requirements = ["graphviz", "pycode_similar", "numpy"]
 
 test_requirements = ['pytest>=3', ]
 
