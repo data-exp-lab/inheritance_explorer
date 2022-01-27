@@ -47,7 +47,7 @@ class ClassGraphTree:
                  funcname: Optional[str] = None,
                  default_color: Optional[str] = "#000000",
                  func_override_color: Optional[str] = "#ff0000",
-                 **kwargs):
+                 ):
         """
         baseclass:
             the starting base class to begin mapping from
@@ -57,13 +57,11 @@ class ClassGraphTree:
             he default outline color of nodes, in any graphviz string
         func_override_color:
             the outline color of nodes that override funcname, in any graphviz string
-        **kwargs:
-            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
         """
         self.baseclass = baseclass
         self.basename: str = baseclass.__name__
         self.funcname = funcname
-        self.dot = Digraph(**kwargs)
+
         self._nodenum: int = 0
         self._node_list = []  # a list of unique ChildNodes
         self._override_src = []
@@ -149,14 +147,20 @@ class ClassGraphTree:
         _ = self.check_subclasses(self.baseclass, self._current_node - 1,
                                   self._current_node)
 
+    def digraph(self, **kwargs):
+        """
+        build a graphviz Digraph from the current node list
 
-
+        **kwargs:
+            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+        """
+        dot = Digraph(**kwargs)
         # finally build the graph
         for node in self._node_list:
-            self.dot.node(node.child_id,
-                          label=node.child_name,
-                          color=node.color,
-                          comment=node._extra_info)
+            dot.node(node.child_id,
+                     label=node.child_name,
+                     color=node.color,
+                     comment=node._extra_info)
             if node.parent:
-                self.dot.edge(node.child_id, node.parent_id)
-
+                dot.edge(node.child_id, node.parent_id)
+        return dot
