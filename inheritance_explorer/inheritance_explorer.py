@@ -134,7 +134,7 @@ class ClassGraphTree:
         if reference is None:
             reference = 1  # use whatever the basenode is
 
-        self.similarity_container = SimilarityContainer()
+        self.similarity_container = SimilarityContainer(method=method)
         sim = self.similarity_container.run(self._override_src, reference=reference)
         return sim
 
