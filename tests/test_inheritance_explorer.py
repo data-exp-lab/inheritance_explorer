@@ -1,6 +1,7 @@
 from inheritance_explorer.inheritance_explorer import ChildNode, ClassGraphTree
 from inheritance_explorer.similarity import PycodeSimilarity
 from inheritance_explorer._testing import ClassForTesting
+import collections
 
 
 def test_child():
@@ -15,5 +16,5 @@ def test_class_graph():
     cgt = ClassGraphTree(ClassForTesting, "use_this_func")
     assert(cgt._node_list[1].parent_id == "1")
     c = cgt.check_source_similarity()
-    assert(isinstance(c, PycodeSimilarity))
-    assert(c.results._3.similarity_fraction < 1.0)
+    assert(isinstance(c, collections.OrderedDict))
+    assert(c[3].similarity_fraction < 1.0)

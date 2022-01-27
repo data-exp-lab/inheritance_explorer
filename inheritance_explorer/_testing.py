@@ -1,4 +1,3 @@
-
 class ClassForTesting:
     def use_this_func(self, a):
         return a
@@ -19,4 +18,3 @@ class ClassForTesting4(ClassForTesting2):
         b = a * 10
         c = b + 10
         return c
-
