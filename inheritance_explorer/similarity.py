@@ -41,7 +41,7 @@ class SimilarityContainer(abc.ABC):
         return results
 
     @abc.abstractmethod
-    def _permute_and_run(self, source_dict: OrderedDict[Any, str]):
+    def _permute_and_run(self, source_dict: OrderedDict[Any, str]) -> Tuple[Dict, np.ndarray, tuple]:
         pass
 
     @abc.abstractmethod
@@ -50,43 +50,13 @@ class SimilarityContainer(abc.ABC):
     ) -> OrderedDict[Any, ResultsContainer]:
         pass
 
-    # @staticmethod
-    # def _expand_source_tuples(source_tuples: List[Tuple[Any, str]]) -> Tuple[List[Any], List[str]]:
-    #     identifiers = [s_t[0] for s_t in source_tuples]
-    #     source_codes = [s_t[1] for s_t in source_tuples]
-    #     return identifiers, source_codes
-
 
 class PycodeSimilarity(SimilarityContainer):
-    @staticmethod
-    def _validate_source_order(
-        identifiers: List[Any], source_codes: List[str], reference: Any
-    ) -> Tuple[List[Any], List[str]]:
 
-        # reorder so that the reference is first
-        ref_indx = identifiers.index(reference)
-
-        if ref_indx != 0:
-            # reorder so the reference is first
-            new_ids = [
-                identifiers[ref_indx],
-            ] + identifiers[:ref_indx]
-            new_src = [
-                source_codes[ref_indx],
-            ] + source_codes[:ref_indx]
-            if ref_indx <= len(identifiers) - 1:
-                new_ids += identifiers[ref_indx + 1 :]
-                new_src += source_codes[ref_indx + 1 :]
-            return new_ids, new_src
-        return identifiers, source_codes
 
     def _compare_single_set(
         self, source_dict: OrderedDict[Any, str], reference: Any
     ) -> OrderedDict[Any, ResultsContainer]:
-        """
-        source_tuples : list
-            list of two-element tuple of (node identifier, source code string)
-        """
 
         src = source_dict[reference]  # extract the reference
         # this will result in a self-comparison, but that is OK and makes some
