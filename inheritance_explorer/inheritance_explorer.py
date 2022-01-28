@@ -6,7 +6,8 @@ from graphviz import Digraph
 from typing import Optional, Any
 import textwrap
 from inheritance_explorer.similarity import PycodeSimilarity
-
+import numpy as np
+from matplotlib.colors import rgb2hex
 
 class ChildNode:
     def __init__(
@@ -48,6 +49,7 @@ class ClassGraphTree:
         funcname: Optional[str] = None,
         default_color: Optional[str] = "#000000",
         func_override_color: Optional[str] = "#ff0000",
+        similarity_cutoff: Optional[float] = 0.75,
     ):
         """
         baseclass:
@@ -66,10 +68,13 @@ class ClassGraphTree:
         self._nodenum: int = 0
         self._node_list = []  # a list of unique ChildNodes
         self._override_src = collections.OrderedDict()
+        self._override_src_files = {}
         self._current_node = 1  # the current global node, must start at 1
         self._default_color = default_color
         self._override_color = func_override_color
         self.similarity_container = None
+        self.similarity_results = None
+        self.similarity_cutoff = similarity_cutoff
         self.build()
 
     def _get_source_info(self, obj) -> Optional[str]:
@@ -120,6 +125,7 @@ class ClassGraphTree:
         f = getattr(clss, self.funcname)
         if isinstance(f, collections.abc.Callable):
             src = textwrap.dedent(inspect.getsource(f))
+            self._override_src_files[current_node] = f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
             self._override_src[current_node] = src
 
     def check_source_similarity(
@@ -140,18 +146,44 @@ class ClassGraphTree:
 
     def build(self):
 
-        # first construct all the nodes
+        # construct the first node
         color = self._get_baseclass_color()
         self._node_list.append(
             ChildNode(self.baseclass, self._current_node, parent=None, color=color)
         )
         self._store_node_func_source(self.baseclass, self._current_node)
+
+        # now check all the children
         self._current_node += 1
         _ = self.check_subclasses(
             self.baseclass, self._current_node - 1, self._current_node
         )
 
-    def digraph(self, **kwargs):
+        # construct the full similarity matrix
+        s_c = PycodeSimilarity(method="permute")
+        _, sim_matrix, sim_axis = s_c.run(self._override_src)
+        sim_axis = np.array(sim_axis)
+        sim_axis_names = np.array([c.child_name for c in self._node_list])
+        self.similarity_results = {'matrix': sim_matrix,
+                                   'axis': sim_axis,
+                                   'axis_names': sim_axis_names}
+
+
+        cutoff_sim = self.similarity_cutoff
+        similarity_sets = {}  # a dict that points to other similar nodes
+        M = sim_matrix
+        for irow in range(M.shape[0]):
+            rowvals = M[irow, :]
+            indxs = np.where(rowvals >= cutoff_sim)[0]
+            indxs = indxs[indxs != irow] # these are matrix indeces
+            node_ids = sim_axis[indxs]
+            if len(node_ids) > 0:
+                this_child = sim_axis[irow]
+                similarity_sets[this_child] = set(node_ids.tolist())
+        self.similarity_sets = similarity_sets
+
+
+    def digraph(self, include_similarity=False, **kwargs):
         """
         build a graphviz Digraph from the current node list
 
@@ -160,6 +192,8 @@ class ClassGraphTree:
         """
         dot = Digraph(**kwargs)
         # finally build the graph
+        iset = 0
+        Nsets = len(self.similarity_sets)
         for node in self._node_list:
             dot.node(
                 node.child_id,
@@ -169,4 +203,13 @@ class ClassGraphTree:
             )
             if node.parent:
                 dot.edge(node.child_id, node.parent_id)
+            if include_similarity:
+                if int(node.child_id) in self.similarity_sets:
+                    R = (iset+1.0) / Nsets * 0.5 + 0.5
+                    G = 0.5
+                    B = 0.5
+                    hexcolor = rgb2hex((R, G, B))
+                    iset += 1
+                    for similar_node_id in self.similarity_sets[int(node.child_id)]:
+                        dot.edge(node.child_id, str(similar_node_id), color=hexcolor)
         return dot

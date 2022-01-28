@@ -91,4 +91,7 @@ class PycodeSimilarity(SimilarityContainer):
             sim_array = np.array([r.similarity_fraction for r in results.values()])
             similarity_matrix[iref, :] = sim_array
             results_by_ref[ref] = results
+
+        # correct for asymmetry
+        similarity_matrix = (similarity_matrix.T + similarity_matrix)/2.
         return results_by_ref, similarity_matrix, sim_axis
