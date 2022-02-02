@@ -2,7 +2,7 @@
 from typing import Any, Optional
 import collections
 import inspect
-from graphviz import Digraph
+import pydot
 from typing import Optional, Any
 import textwrap
 from inheritance_explorer.similarity import PycodeSimilarity
@@ -182,27 +182,35 @@ class ClassGraphTree:
                 similarity_sets[this_child] = set(node_ids.tolist())
         self.similarity_sets = similarity_sets
 
-
-    def digraph(self, include_similarity=False, **kwargs):
+    def build_graph(self, *args, include_similarity: bool = True, **kwargs) -> pydot.Dot:
         """
-        build a graphviz Digraph from the current node list
+        build a digraph from the current node list
 
+        Parameters
+        ----------
+        *args:
+            any arg accepted by pydot.Dot
+        include_similarity: bool
+            include edges for similar code (default True)
         **kwargs:
             any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
         """
-        dot = Digraph(**kwargs)
-        # finally build the graph
+
+        gtype = "digraph"
+        if "graph_type" in kwargs:
+            gtype = kwargs.pop("graph_type")
+
+        dot = pydot.Dot("test_graph", *args, graph_type=gtype, **kwargs)
+
         iset = 0
         Nsets = len(self.similarity_sets)
         for node in self._node_list:
-            dot.node(
-                node.child_id,
-                label=node.child_name,
-                color=node.color,
-                comment=node._extra_info,
-            )
+            new_node = pydot.Node(node.child_id,
+                                  label=node.child_name,
+                                  color=node.color)
+            dot.add_node(new_node)
             if node.parent:
-                dot.edge(node.child_id, node.parent_id)
+                dot.add_edge(pydot.Edge(node.child_id, node.parent_id))
             if include_similarity:
                 if int(node.child_id) in self.similarity_sets:
                     R = (iset+1.0) / Nsets * 0.5 + 0.5
@@ -211,5 +219,27 @@ class ClassGraphTree:
                     hexcolor = rgb2hex((R, G, B))
                     iset += 1
                     for similar_node_id in self.similarity_sets[int(node.child_id)]:
-                        dot.edge(node.child_id, str(similar_node_id), color=hexcolor)
-        return dot
+                        new_edge = pydot.Edge(node.child_id,
+                                              str(similar_node_id),
+                                              color=hexcolor)
+                        dot.add_edge(new_edge)
+
+        self._graph = dot
+
+    _graph = None
+    @property
+    def graph(self) -> pydot.Dot:
+        if self._graph is None:
+            self.build_graph()
+        return self._graph
+
+    def show_graph(self, env: str = "notebook"):
+        return show_graph(self.graph, env=env)
+
+
+def show_graph(dot_graph: pydot.Dot, env: str = "notebook"):
+    if env == "notebook":
+        from IPython.core.display import SVG
+        graph_svg = dot_graph.create_svg()
+        return SVG(graph_svg)
+
