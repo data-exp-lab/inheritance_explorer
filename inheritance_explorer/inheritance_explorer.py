@@ -1,13 +1,14 @@
 """Main module."""
-from typing import Any, Optional
 import collections
 import inspect
 import pydot
-from typing import Optional, Any
+from typing import Optional, Any, Tuple
 import textwrap
 from inheritance_explorer.similarity import PycodeSimilarity
 import numpy as np
 from matplotlib.colors import rgb2hex
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 class ChildNode:
     def __init__(
@@ -233,13 +234,78 @@ class ClassGraphTree:
             self.build_graph()
         return self._graph
 
-    def show_graph(self, env: str = "notebook"):
-        return show_graph(self.graph, env=env)
+    def show_graph(self, env: str = "notebook", format: str = "png"):
+        return show_graph(self.graph, env=env, format=format)
+
+    def plot_similarity(self,
+                        above_cutoff: Optional[bool] = False,
+                        ax: Optional[Axes] = None,
+                        colorbar: Optional[bool] = True,
+                        **kwargs
+                        ) -> Tuple[dict, Axes]:
+        """
+        add the similarity plot to a matplotlib axis (or create a new one)
+
+        Parameters
+        ----------
+        above_cutoff: bool
+            if True (default False), plots where similarity > cutoff
+        ax: Axes
+            matplotlib axis to add the plot to. A new axis handle will be
+            created and returned if this is not set.
+        colorbar: bool
+            adds a colorbar to ax if True (default)
+
+        kwargs
+            any keyword argument accepted by plt.imshow()
+
+        Returns
+        -------
+        (sim_labels, ax)
+            sim_labels: dictionary mapping the matrix indices to label
+            ax: the modified (or new) axis handle
 
 
-def show_graph(dot_graph: pydot.Dot, env: str = "notebook"):
+        """
+        if ax is None:
+            _, ax = plt.subplots(1)
+
+        if above_cutoff:
+            M = self.similarity_results['matrix'] > self.similarity_cutoff
+        else:
+            M = self.similarity_results['matrix']
+
+        if "cmap" not in kwargs:
+            if above_cutoff:
+                kwargs["cmap"] = "gray"
+            else:
+                kwargs["cmap"] = "magma"
+
+        im = ax.imshow(M, **kwargs)
+        _ = ax.set_xticks(range(M.shape[0]))
+        _ = ax.set_yticks(range(M.shape[0]))
+        if colorbar:
+            plt.colorbar(im, ax=ax)
+
+        sim_labels = [self._node_list[cid - 1].child_name for cid in self._override_src.keys()]
+        sim_labels = {lid: label for lid, label in enumerate(sim_labels)}
+        return sim_labels, ax
+
+
+def show_graph(dot_graph: pydot.Dot,
+               format: str = "svg",
+               env: str = "notebook"):
+
+    create_func = getattr(dot_graph, f"create_{format}")
+    graph = create_func()
+
     if env == "notebook":
-        from IPython.core.display import SVG
-        graph_svg = dot_graph.create_svg()
-        return SVG(graph_svg)
+        if format == "svg":
+            from IPython.core.display import SVG
+            return SVG(graph)
+        else:
+            from IPython.core.display import Image
+            return Image(graph, unconfined=True)
+
+    return graph
 
