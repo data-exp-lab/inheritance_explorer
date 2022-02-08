@@ -9,6 +9,8 @@ import numpy as np
 from matplotlib.colors import rgb2hex
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+import networkx as nx
+from pyvis.network import Network
 
 class ChildNode:
     def __init__(
@@ -290,6 +292,66 @@ class ClassGraphTree:
         sim_labels = [self._node_list[cid - 1].child_name for cid in self._override_src.keys()]
         sim_labels = {lid: label for lid, label in enumerate(sim_labels)}
         return sim_labels, ax
+
+    def build_interactive_graph(self,
+                                include_similarity: bool = True,
+                                **kwargs) -> Network:
+
+        """
+        build a digraph from the current node list
+
+        Parameters
+        ----------
+        *args:
+            any arg accepted by pydot.Dot
+        include_similarity: bool
+            include edges for similar code (default True)
+        **kwargs:
+            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+        """
+
+        grph = nx.Graph(directed=True)
+
+        iset = 0
+        for node in self._node_list:
+            if node.color == "#000000":
+                # no override. show improve this...
+                hexcolor = rgb2hex((0.7, 0.7, 0.7))
+            else:
+                hexcolor = rgb2hex((0.5, 0.5, 1.0))
+
+            if node.parent:
+                parent_info = f"({node.parent.__name__})"
+            else:
+                parent_info = ""
+            grph.add_node(
+                node.child_id,
+                title=f"{node.child_name}{parent_info}",
+                color=hexcolor,
+            )
+
+            if include_similarity:
+                if int(node.child_id) in self.similarity_sets:
+                    hexcolor = rgb2hex((0, 0.5, 1.0))
+                    iset += 1
+                    for similar_node_id in self.similarity_sets[int(node.child_id)]:
+                        grph.add_edge(node.child_id,
+                                      str(similar_node_id),
+                                      color=hexcolor,
+                                      physics=False)
+
+            arrowsop= {"from": {"enabled": True}}
+            if node.parent:
+                grph.add_edge(node.child_id,
+                              node.parent_id,
+                              color=rgb2hex((0.7, 0.7, 0.7)),
+                              physics=True,
+                              arrows=arrowsop)
+
+        # return the interactive pyvis Network graph
+        network_wrapper = Network(notebook=True, **kwargs)
+        network_wrapper.from_nx(grph)
+        return network_wrapper
 
 
 def show_graph(dot_graph: pydot.Dot,
