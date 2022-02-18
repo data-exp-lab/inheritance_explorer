@@ -16,6 +16,9 @@ inheritance_explorer
 
 A tool for exploring complex inheritance patters in python code. 
 
+.. image:: https://raw.githubusercontent.com/chrishavlin/inheritance_explorer/main/docs/resources/tree_shot.png
+        
+
 Installation
 ------------
 
