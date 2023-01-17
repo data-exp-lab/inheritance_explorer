@@ -1,8 +1,9 @@
 import abc
-from typing import Any, Optional, List, Tuple, Dict, OrderedDict
-import pycode_similar
-import numpy as np
 import collections
+from typing import Any, Dict, List, Optional, OrderedDict, Tuple
+
+import numpy as np
+import pycode_similar
 
 
 class ResultsContainer:
@@ -41,7 +42,9 @@ class SimilarityContainer(abc.ABC):
         return results
 
     @abc.abstractmethod
-    def _permute_and_run(self, source_dict: OrderedDict[Any, str]) -> Tuple[Dict, np.ndarray, tuple]:
+    def _permute_and_run(
+        self, source_dict: OrderedDict[Any, str]
+    ) -> Tuple[Dict, np.ndarray, tuple]:
         pass
 
     @abc.abstractmethod
@@ -52,8 +55,6 @@ class SimilarityContainer(abc.ABC):
 
 
 class PycodeSimilarity(SimilarityContainer):
-
-
     def _compare_single_set(
         self, source_dict: OrderedDict[Any, str], reference: Any
     ) -> OrderedDict[Any, ResultsContainer]:
@@ -93,5 +94,5 @@ class PycodeSimilarity(SimilarityContainer):
             results_by_ref[ref] = results
 
         # correct for asymmetry
-        similarity_matrix = (similarity_matrix.T + similarity_matrix)/2.
+        similarity_matrix = (similarity_matrix.T + similarity_matrix) / 2.0
         return results_by_ref, similarity_matrix, sim_axis
