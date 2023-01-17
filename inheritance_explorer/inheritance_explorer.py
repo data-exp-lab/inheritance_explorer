@@ -154,7 +154,8 @@ class ClassGraphTree:
         self._node_list.append(
             ChildNode(self.baseclass, self._current_node, parent=None, color=color)
         )
-        self._store_node_func_source(self.baseclass, self._current_node)
+        if self.funcname:
+            self._store_node_func_source(self.baseclass, self._current_node)
 
         # now check all the children
         self._current_node += 1

@@ -26,3 +26,8 @@ def test_class_graph():
     cgt = ClassGraphTree(ClassForTesting, "use_this_func")
     cgt.build_graph(graph_type="graph")
     assert isinstance(cgt.graph, pydot.Dot)
+
+
+def test_class_graph_no_function():
+    cgt = ClassGraphTree(ClassForTesting)
+    assert (cgt._node_list[1].parent_id == "1")
