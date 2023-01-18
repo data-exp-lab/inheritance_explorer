@@ -6,12 +6,17 @@ inheritance_explorer
 .. image:: https://img.shields.io/pypi/v/inheritance_explorer.svg
         :target: https://pypi.python.org/pypi/inheritance_explorer
 
-.. image:: https://img.shields.io/travis/chrishavlin/inheritance_explorer.svg
-        :target: https://travis-ci.com/chrishavlin/inheritance_explorer
+.. image:: https://github.com/data-exp-lab/inheritance_explorer/actions/workflows/run-tests.yml/badge.svg
+        :target: https://github.com/data-exp-lab/inheritance_explorer/actions/workflows/run-tests.yml
+        :alt: Testing Status
 
 .. image:: https://readthedocs.org/projects/inheritance-explorer/badge/?version=latest
         :target: https://inheritance-explorer.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
+        
+.. image:: https://codecov.io/gh/data-exp-lab/inheritance_explorer/branch/main/graph/badge.svg?token=EvmlPg5X1O 
+        :target: https://codecov.io/gh/data-exp-lab/inheritance_explorer
+        :alt: Current Coverage
 
 
 A tool for exploring complex inheritance patters in python code. 
