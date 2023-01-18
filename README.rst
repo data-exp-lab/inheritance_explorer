@@ -24,6 +24,9 @@ Installation
 
 not released (yet?), so install from source (fork/clone locally, `pip install .`). 
 
+For some functionality, the `graphviz <https://graphviz.org/>`_ package needs to be installed separately. TO DO: add install instructions, note which parts of the code require it. 
+
+
 Usage
 -----
 
