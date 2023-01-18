@@ -75,3 +75,8 @@ def test_pycode_similarity_permuted(sample_source_dict):
 
     for k in s_dict.keys():
         assert k in sim_axis
+
+
+def test_errors():
+    with pytest.raises(ValueError, match="Provided method not recognized"):
+        _ = PycodeSimilarity(method="badmethod")
