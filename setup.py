@@ -17,6 +17,7 @@ requirements = [
     "matplotlib",
     "pyvis",
     "networkx",
+    "click",
 ]
 
 test_requirements = [
