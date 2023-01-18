@@ -1,22 +1,31 @@
 """Console script for inheritance_explorer."""
-from inheritance_explorer.inheritance_explorer import ClassGraphTree
 import importlib
 import os
+
 import click
 
+from inheritance_explorer.inheritance_explorer import ClassGraphTree
+
+
 @click.command()
-@click.argument('module_class', type=str)
-@click.argument('output_file', type=str)
-@click.option('--output_format', default=None, help='output format string (default is svg, or the file extension of output_file)')
-@click.option('--import_list', default=None, help='comma-separated list of modules to import')
-@click.option('--funcname', default=None, help='function name to track')
+@click.argument("module_class", type=str)
+@click.argument("output_file", type=str)
+@click.option(
+    "--output_format",
+    default=None,
+    help="output format string (default is svg, or the file extension of output_file)",
+)
+@click.option(
+    "--import_list", default=None, help="comma-separated list of modules to import"
+)
+@click.option("--funcname", default=None, help="function name to track")
 def map_class(module_class, output_file, output_format, import_list, funcname):
     """
     map a class and save the graph to a file. requires graphviz installation.
     """
 
     # import the class of interest
-    mod_cls = module_class.split('.')
+    mod_cls = module_class.split(".")
     if len(mod_cls) > 2:
         mod_name = ".".join(mod_cls[0:-1])
     elif len(mod_cls) < 2:
@@ -29,8 +38,8 @@ def map_class(module_class, output_file, output_format, import_list, funcname):
 
     # import any other modules that we want in scope
     if import_list is not None:
-        import_list = [m.strip() for m in import_list.split(',')]
-        modules = map(importlib.__import__, import_list)
+        import_list = [m.strip() for m in import_list.split(",")]
+        modules = map(importlib.__import__, import_list)  # noqa: F841
 
     if funcname is not None:
         if hasattr(cls, funcname) is False:
@@ -48,4 +57,3 @@ def map_class(module_class, output_file, output_format, import_list, funcname):
     cgt.graph.write(output_file, format=fmt)
 
     return 0
-
