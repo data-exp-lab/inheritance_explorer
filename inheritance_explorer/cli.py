@@ -35,8 +35,6 @@ def map_class(module_class, output_file, output_format, import_list, funcname):
     if funcname is not None:
         if hasattr(cls, funcname) is False:
             raise AttributeError(f"{funcname} is not an attribute of {cls}")
-        else:
-            print(f"hello {funcname}")
 
     # now build the graph
     cgt = ClassGraphTree(cls, funcname=funcname)
