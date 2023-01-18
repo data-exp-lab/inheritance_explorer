@@ -104,3 +104,10 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+
+# tempfiles 
+*.swp
+
+# build
+pip-wheel-metadata/*

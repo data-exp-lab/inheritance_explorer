@@ -1,16 +1,19 @@
 """Main module."""
 import collections
 import inspect
-import pydot
-from typing import Optional, Any, Tuple, Union
 import textwrap
-from inheritance_explorer.similarity import PycodeSimilarity
-import numpy as np
-from matplotlib.colors import rgb2hex
+from typing import Any, Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 import networkx as nx
+import numpy as np
+import pydot
+from matplotlib.axes import Axes
+from matplotlib.colors import rgb2hex
 from pyvis.network import Network
+
+from inheritance_explorer.similarity import PycodeSimilarity
+
 
 class ChildNode:
     def __init__(
@@ -80,7 +83,7 @@ class ClassGraphTree:
         self.similarity_results = None
         self.similarity_cutoff = similarity_cutoff
         self.build()
-        self._node_map_r = {v:k for k, v in self._node_map.items()}  # name to index
+        self._node_map_r = {v: k for k, v in self._node_map.items()}  # name to index
 
     def _get_source_info(self, obj) -> Optional[str]:
         f = getattr(obj, self.funcname)
@@ -131,7 +134,9 @@ class ClassGraphTree:
         f = getattr(clss, self.funcname)
         if isinstance(f, collections.abc.Callable):
             src = textwrap.dedent(inspect.getsource(f))
-            self._override_src_files[current_node] = f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
+            self._override_src_files[
+                current_node
+            ] = f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
             self._override_src[current_node] = src
 
     def check_source_similarity(
@@ -172,10 +177,11 @@ class ClassGraphTree:
         _, sim_matrix, sim_axis = s_c.run(self._override_src)
         sim_axis = np.array(sim_axis)
         sim_axis_names = np.array([c.child_name for c in self._node_list])
-        self.similarity_results = {'matrix': sim_matrix,
-                                   'axis': sim_axis,
-                                   'axis_names': sim_axis_names}
-
+        self.similarity_results = {
+            "matrix": sim_matrix,
+            "axis": sim_axis,
+            "axis_names": sim_axis_names,
+        }
 
         cutoff_sim = self.similarity_cutoff
         similarity_sets = {}  # a dict that points to other similar nodes
@@ -183,14 +189,16 @@ class ClassGraphTree:
         for irow in range(M.shape[0]):
             rowvals = M[irow, :]
             indxs = np.where(rowvals >= cutoff_sim)[0]
-            indxs = indxs[indxs != irow] # these are matrix indeces
+            indxs = indxs[indxs != irow]  # these are matrix indeces
             node_ids = sim_axis[indxs]
             if len(node_ids) > 0:
                 this_child = sim_axis[irow]
                 similarity_sets[this_child] = set(node_ids.tolist())
         self.similarity_sets = similarity_sets
 
-    def build_graph(self, *args, include_similarity: bool = True, **kwargs) -> pydot.Dot:
+    def build_graph(
+        self, *args, include_similarity: bool = True, **kwargs
+    ) -> pydot.Dot:
         """
         build a digraph from the current node list
 
@@ -213,28 +221,29 @@ class ClassGraphTree:
         iset = 0
         Nsets = len(self.similarity_sets)
         for node in self._node_list:
-            new_node = pydot.Node(node.child_id,
-                                  label=node.child_name,
-                                  color=node.color)
+            new_node = pydot.Node(
+                node.child_id, label=node.child_name, color=node.color
+            )
             dot.add_node(new_node)
             if node.parent:
                 dot.add_edge(pydot.Edge(node.child_id, node.parent_id))
             if include_similarity:
                 if int(node.child_id) in self.similarity_sets:
-                    R = (iset+1.0) / Nsets * 0.5 + 0.5
+                    R = (iset + 1.0) / Nsets * 0.5 + 0.5
                     G = 0.5
                     B = 0.5
                     hexcolor = rgb2hex((R, G, B))
                     iset += 1
                     for similar_node_id in self.similarity_sets[int(node.child_id)]:
-                        new_edge = pydot.Edge(node.child_id,
-                                              str(similar_node_id),
-                                              color=hexcolor)
+                        new_edge = pydot.Edge(
+                            node.child_id, str(similar_node_id), color=hexcolor
+                        )
                         dot.add_edge(new_edge)
 
         self._graph = dot
 
     _graph = None
+
     @property
     def graph(self) -> pydot.Dot:
         if self._graph is None:
@@ -244,12 +253,13 @@ class ClassGraphTree:
     def show_graph(self, env: str = "notebook", format: str = "png"):
         return show_graph(self.graph, env=env, format=format)
 
-    def plot_similarity(self,
-                        above_cutoff: Optional[bool] = False,
-                        ax: Optional[Axes] = None,
-                        colorbar: Optional[bool] = True,
-                        **kwargs
-                        ) -> Tuple[dict, Axes]:
+    def plot_similarity(
+        self,
+        above_cutoff: Optional[bool] = False,
+        ax: Optional[Axes] = None,
+        colorbar: Optional[bool] = True,
+        **kwargs,
+    ) -> Tuple[dict, Axes]:
         """
         add the similarity plot to a matplotlib axis (or create a new one)
 
@@ -278,9 +288,9 @@ class ClassGraphTree:
             _, ax = plt.subplots(1)
 
         if above_cutoff:
-            M = self.similarity_results['matrix'] > self.similarity_cutoff
+            M = self.similarity_results["matrix"] > self.similarity_cutoff
         else:
-            M = self.similarity_results['matrix']
+            M = self.similarity_results["matrix"]
 
         if "cmap" not in kwargs:
             if above_cutoff:
@@ -294,13 +304,15 @@ class ClassGraphTree:
         if colorbar:
             plt.colorbar(im, ax=ax)
 
-        sim_labels = [self._node_list[cid - 1].child_name for cid in self._override_src.keys()]
+        sim_labels = [
+            self._node_list[cid - 1].child_name for cid in self._override_src.keys()
+        ]
         sim_labels = {lid: label for lid, label in enumerate(sim_labels)}
         return sim_labels, ax
 
-    def build_interactive_graph(self,
-                                include_similarity: bool = True,
-                                **kwargs) -> Network:
+    def build_interactive_graph(
+        self, include_similarity: bool = True, **kwargs
+    ) -> Network:
 
         """
         build a digraph from the current node list
@@ -340,24 +352,27 @@ class ClassGraphTree:
                     hexcolor = rgb2hex((0, 0.5, 1.0))
                     iset += 1
                     for similar_node_id in self.similarity_sets[int(node.child_id)]:
-                        grph.add_edge(node.child_id,
-                                      str(similar_node_id),
-                                      color=hexcolor,
-                                      physics=False)
+                        grph.add_edge(
+                            node.child_id,
+                            str(similar_node_id),
+                            color=hexcolor,
+                            physics=False,
+                        )
 
-            arrowsop= {"from": {"enabled": True}}
+            arrowsop = {"from": {"enabled": True}}
             if node.parent:
-                grph.add_edge(node.child_id,
-                              node.parent_id,
-                              color=rgb2hex((0.7, 0.7, 0.7)),
-                              physics=True,
-                              arrows=arrowsop)
+                grph.add_edge(
+                    node.child_id,
+                    node.parent_id,
+                    color=rgb2hex((0.7, 0.7, 0.7)),
+                    physics=True,
+                    arrows=arrowsop,
+                )
 
         # return the interactive pyvis Network graph
         network_wrapper = Network(notebook=True, **kwargs)
         network_wrapper.from_nx(grph)
         return network_wrapper
-
 
     def get_source_code(self, node: Union[str, int]) -> str:
         """
@@ -381,13 +396,12 @@ class ClassGraphTree:
             if node_id in self._override_src:
                 return self._override_src[node_id]
             else:
-                raise ValueError(f"node {node} does not override the "
-                                 f"chosen function.")
+                raise ValueError(
+                    f"node {node} does not override the " f"chosen function."
+                )
         raise KeyError(f"Could not find node for {node}")
 
-    def get_multiple_source_code(self,
-                                 node_1: Union[str, int],
-                                 *args) -> dict:
+    def get_multiple_source_code(self, node_1: Union[str, int], *args) -> dict:
         """
         Retrieve the source code for multiple nodes
 
@@ -410,9 +424,7 @@ class ClassGraphTree:
         return src_dict
 
 
-def show_graph(dot_graph: pydot.Dot,
-               format: str = "svg",
-               env: str = "notebook"):
+def show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
 
     create_func = getattr(dot_graph, f"create_{format}")
     graph = create_func()
@@ -420,10 +432,11 @@ def show_graph(dot_graph: pydot.Dot,
     if env == "notebook":
         if format == "svg":
             from IPython.core.display import SVG
+
             return SVG(graph)
         else:
             from IPython.core.display import Image
+
             return Image(graph, unconfined=True)
 
     return graph
-
