@@ -1,6 +1,14 @@
 name: Run tests
 
-on: [pull_request, push]
+on: 
+  push:
+    paths:
+       - '**.py'
+       - '**run-tests.yml'
+  pull_request:
+    paths:
+       - '**.py'
+       - '**run-tests.yml'
 
 jobs:
   build:
