@@ -12,7 +12,6 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "pydot",
-    "graphviz",
     "pycode_similar",
     "numpy",
     "matplotlib",
