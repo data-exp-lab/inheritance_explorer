@@ -10,15 +10,8 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = [
-    "pydot",
-    "pycode_similar",
-    "numpy",
-    "matplotlib",
-    "pyvis",
-    "networkx",
-    "click",
-]
+with open("requirements.txt") as reqs_f:
+    requirements = [req.strip() for req in reqs_f.readlines()]
 
 test_requirements = [
     "pytest>=3",
