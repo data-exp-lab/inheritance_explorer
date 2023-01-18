@@ -1,10 +1,5 @@
 name: Style Checks
 on: 
-  push:
-    paths:
-       - '**.py'
-       - '**style-checks.yml'
-       - 'tests/lint_requirements.txt'
   pull_request:
     paths:
        - '**.py'
