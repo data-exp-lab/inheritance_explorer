@@ -40,7 +40,7 @@ setup(
     description="A tool for exploring complex inheritance patters in python code",
     entry_points={
         "console_scripts": [
-            "inheritance_explorer=inheritance_explorer.cli:main",
+            "inheritance_explorer=inheritance_explorer.cli:map_class",
         ],
     },
     install_requires=requirements,
