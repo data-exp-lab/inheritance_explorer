@@ -8,6 +8,7 @@ Welcome to inheritance_explorer's documentation!
    readme
    installation
    usage
+   examples
    modules
    contributing
    authors

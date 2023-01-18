@@ -2,7 +2,7 @@
 import collections
 import inspect
 import textwrap
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -73,6 +73,7 @@ class ClassGraphTree:
 
         self._nodenum: int = 0
         self._node_list = []  # a list of unique ChildNodes
+        self._node_map = {}  # map of global node index to node name
         self._override_src = collections.OrderedDict()
         self._override_src_files = {}
         self._current_node = 1  # the current global node, must start at 1
@@ -82,6 +83,7 @@ class ClassGraphTree:
         self.similarity_results = None
         self.similarity_cutoff = similarity_cutoff
         self.build()
+        self._node_map_r = {v: k for k, v in self._node_map.items()}  # name to index
 
     def _get_source_info(self, obj) -> Optional[str]:
         f = getattr(obj, self.funcname)
@@ -118,6 +120,7 @@ class ClassGraphTree:
                 child, node_i, parent=parent, parent_id=parent_id, color=color
             )
             self._node_list.append(new_node)
+            self._node_map[node_i] = new_node.child_name
             if self.funcname and self._node_overrides_func(child, parent):
                 self._store_node_func_source(child, node_i)
             node_i += 1
@@ -159,6 +162,7 @@ class ClassGraphTree:
         self._node_list.append(
             ChildNode(self.baseclass, self._current_node, parent=None, color=color)
         )
+        self._node_map[self._current_node] = self._node_list[-1].child_name
         if self.funcname:
             self._store_node_func_source(self.baseclass, self._current_node)
 
@@ -369,6 +373,55 @@ class ClassGraphTree:
         network_wrapper = Network(notebook=True, **kwargs)
         network_wrapper.from_nx(grph)
         return network_wrapper
+
+    def get_source_code(self, node: Union[str, int]) -> str:
+        """
+        retrieve the source code of the comparison function for a
+        specified node
+
+        Parameters
+        ----------
+        node: Union[str, int]
+        the node to fetch the source code for
+
+        Returns
+        -------
+        str
+        a string containing the source code for the node.
+        """
+        if node in self._override_src:
+            return self._override_src[node]
+        elif isinstance(node, str) and node in self._node_map_r:
+            node_id = self._node_map_r[node]
+            if node_id in self._override_src:
+                return self._override_src[node_id]
+            else:
+                raise ValueError(
+                    f"node {node} does not override the " f"chosen function."
+                )
+        raise KeyError(f"Could not find node for {node}")
+
+    def get_multiple_source_code(self, node_1: Union[str, int], *args) -> dict:
+        """
+        Retrieve the source code for multiple nodes
+
+        Parameters
+        ----------
+        node_1: Union[str, int]
+        the first node to fetch
+        *args: Union[str, int]
+        any additional nodes to fetch
+
+        Returns
+        -------
+        dict
+        dictionary where the node is the key and the source code the value.
+        """
+        src_dict = {}
+        src_dict[node_1] = self.get_source_code(node_1)
+        for src_key in args:
+            src_dict[src_key] = self.get_source_code(src_key)
+        return src_dict
 
 
 def show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
