@@ -24,4 +24,10 @@ jobs:
       run: |
         python -m pip install -e .
     - name: Run Tests
-      run: pytest
+      run: pytest --cov=./ --cov-report=xml:coverage/coverage.xml
+
+    # https://github.com/marketplace/actions/codecov#example-workflowyml-with-codecov-action
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./coverage/
