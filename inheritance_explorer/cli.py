@@ -1,4 +1,6 @@
-"""Console script for inheritance_explorer."""
+"""Console script for inheritance_explorer. Run $ inheritance_explorer --help
+for instructions and options.
+"""
 import importlib
 import os
 

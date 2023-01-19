@@ -4,7 +4,7 @@ import pydot
 import pytest
 
 from inheritance_explorer._testing import ClassForTesting
-from inheritance_explorer.inheritance_explorer import ChildNode, ClassGraphTree
+from inheritance_explorer.inheritance_explorer import ClassGraphTree, _ChildNode
 
 
 @pytest.fixture()
@@ -13,8 +13,8 @@ def cgt():
 
 
 def test_child():
-    child_class = ChildNode
-    node = ChildNode(child_class, 1)
+    child_class = _ChildNode
+    node = _ChildNode(child_class, 1)
     assert type(node.child_id) == str
     assert node.parent_id is None
 
@@ -30,10 +30,10 @@ def test_class_graph(cgt):
     # make sure the graph builds
     for in_sim in [True, False]:
         cgt = ClassGraphTree(ClassForTesting, "use_this_func")
-        cgt.build_graph(include_similarity=in_sim)
+        cgt._build_graph(include_similarity=in_sim)
         assert isinstance(cgt.graph, pydot.Dot)
     cgt = ClassGraphTree(ClassForTesting, "use_this_func")
-    cgt.build_graph(graph_type="graph")
+    cgt._build_graph(graph_type="graph")
     assert isinstance(cgt.graph, pydot.Dot)
 
 

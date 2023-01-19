@@ -1,4 +1,3 @@
-"""Main module."""
 import collections
 import inspect
 import textwrap
@@ -15,7 +14,7 @@ from pyvis.network import Network
 from inheritance_explorer.similarity import PycodeSimilarity
 
 
-class ChildNode:
+class _ChildNode:
     def __init__(
         self,
         child: Any,
@@ -49,6 +48,24 @@ class ChildNode:
 
 
 class ClassGraphTree:
+    """
+    A hierarchical class graph container.
+
+    Parameters
+    ----------
+
+    baseclass
+       the starting base class to begin mapping from
+    funcname: str
+       (optional) the name of a function to watch for overrides
+    default_color: str
+       (optional) the default outline color of nodes, in any graphviz string
+    func_override_color: str
+       (optional) the outline color of nodes that override funcname, in any
+       graphviz string
+
+    """
+
     def __init__(
         self,
         baseclass: Any,
@@ -57,16 +74,7 @@ class ClassGraphTree:
         func_override_color: Optional[str] = "#ff0000",
         similarity_cutoff: Optional[float] = 0.75,
     ):
-        """
-        baseclass:
-            the starting base class to begin mapping from
-        funcname:
-            the name of a function to watch for overrides
-        default_color: t
-            he default outline color of nodes, in any graphviz string
-        func_override_color:
-            the outline color of nodes that override funcname, in any graphviz string
-        """
+
         self.baseclass = baseclass
         self.basename: str = baseclass.__name__
         self.funcname = funcname
@@ -82,7 +90,7 @@ class ClassGraphTree:
         self.similarity_container = None
         self.similarity_results = None
         self.similarity_cutoff = similarity_cutoff
-        self.build()
+        self._build()
         self._node_map_r = {v: k for k, v in self._node_map.items()}  # name to index
 
     def _get_source_info(self, obj) -> Optional[str]:
@@ -116,7 +124,7 @@ class ClassGraphTree:
     def check_subclasses(self, parent, parent_id: int, node_i: int) -> int:
         for child in parent.__subclasses__():
             color = self._get_new_node_color(child, parent)
-            new_node = ChildNode(
+            new_node = _ChildNode(
                 child, node_i, parent=parent, parent_id=parent_id, color=color
             )
             self._node_list.append(new_node)
@@ -155,12 +163,12 @@ class ClassGraphTree:
         sim = self.similarity_container.run(self._override_src, reference=reference)
         return sim
 
-    def build(self):
+    def _build(self):
 
         # construct the first node
         color = self._get_baseclass_color()
         self._node_list.append(
-            ChildNode(self.baseclass, self._current_node, parent=None, color=color)
+            _ChildNode(self.baseclass, self._current_node, parent=None, color=color)
         )
         self._node_map[self._current_node] = self._node_list[-1].child_name
         if self.funcname:
@@ -196,7 +204,7 @@ class ClassGraphTree:
                 similarity_sets[this_child] = set(node_ids.tolist())
         self.similarity_sets = similarity_sets
 
-    def build_graph(
+    def _build_graph(
         self, *args, include_similarity: bool = True, **kwargs
     ) -> pydot.Dot:
         """
@@ -246,12 +254,14 @@ class ClassGraphTree:
 
     @property
     def graph(self) -> pydot.Dot:
+        """a GraphViz dot graph of the class hierarchy"""
         if self._graph is None:
-            self.build_graph()
+            self._build_graph()
         return self._graph
 
     def show_graph(self, env: str = "notebook", format: str = "png"):
-        return show_graph(self.graph, env=env, format=format)
+        """display a static GraphViz graph"""
+        return _show_graph(self.graph, env=env, format=format)
 
     def plot_similarity(
         self,
@@ -315,7 +325,7 @@ class ClassGraphTree:
     ) -> Network:
 
         """
-        build a digraph from the current node list
+        build an interactive Network graph from the current node list
 
         Parameters
         ----------
@@ -325,6 +335,11 @@ class ClassGraphTree:
             include edges for similar code (default True)
         **kwargs:
             any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+
+        Returns
+        -------
+        Network
+            the pyvis.Network representation of the class hierarchy.
         """
 
         grph = nx.Graph(directed=True)
@@ -424,8 +439,8 @@ class ClassGraphTree:
         return src_dict
 
 
-def show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
-
+def _show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
+    # return a GraphViz dot graph in a jupyter-friendly format.
     create_func = getattr(dot_graph, f"create_{format}")
     graph = create_func()
 

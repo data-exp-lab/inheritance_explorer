@@ -6,7 +6,6 @@ Welcome to inheritance_explorer's documentation!
    :caption: Contents:
 
    readme
-   installation
    usage
    examples
    modules
