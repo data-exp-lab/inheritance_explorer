@@ -19,8 +19,12 @@ inheritance_explorer
         :alt: Current Coverage
 
 
-``inheritance_explorer`` is a tool for exploring complex class inheritance
-patterns in python code.
+
+The ``inheritance_explorer`` is an open source python package for inspecting
+other packages. In particular, it focuses on class inheritance structures, allowing
+you to produce graphs that recursively map out child classes from a given
+starting class. There are a number of useful applications: from learning structures
+of unfamiliar code bases to identifying duplicate code.
 
 .. image:: https://raw.githubusercontent.com/chrishavlin/inheritance_explorer/main/docs/resources/tree_shot.png
 
