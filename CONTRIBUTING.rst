@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/chrishavlin/inheritance_explorer/issues.
+Report bugs at https://github.com/data-exp-lab/inheritance_explorer/issues.
 
 If you are reporting a bug, please include:
 
@@ -45,7 +45,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/chrishavlin/inheritance_explorer/issues.
+The best way to send feedback is to file an issue at https://github.com/data-exp-lab/inheritance_explorer/issues.
 
 If you are proposing a feature:
 
@@ -64,7 +64,9 @@ Ready to contribute? Here's how to set up `inheritance_explorer` for local devel
 
     $ git clone git@github.com:your_name_here/inheritance_explorer.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have v
+irtualenvwrapper installed, this is how you set up your fork for local
+development::
 
     $ mkvirtualenv inheritance_explorer
     $ cd inheritance_explorer/
@@ -113,16 +115,3 @@ To run a subset of tests::
 
 $ pytest tests.test_inheritance_explorer
 
-
-Deploying
----------
-
-A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.rst).
-Then run::
-
-$ bump2version patch # possible: major / minor / patch
-$ git push
-$ git push --tags
-
-Travis will then deploy to PyPI if tests pass.
