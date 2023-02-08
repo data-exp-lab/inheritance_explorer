@@ -24,6 +24,13 @@ from inheritance_explorer.inheritance_explorer import ClassGraphTree
 def map_class(module_class, output_file, output_format, import_list, funcname):
     """
     map a class and save the graph to a file. requires graphviz installation.
+
+    MODULE_CLASS : the starting class to map from, must be of the form Module.Class
+    Multiple modules may be specified, it is assumed the last entry is the class.
+    For example, matplotlib.axes.Axes with map from Axes, which can
+    be imported from matplotlib.axes
+
+    OUTPUT_FILE : the output file for saving the graph
     """
 
     # import the class of interest
@@ -41,7 +48,7 @@ def map_class(module_class, output_file, output_format, import_list, funcname):
     # import any other modules that we want in scope
     if import_list is not None:
         import_list = [m.strip() for m in import_list.split(",")]
-        modules = map(importlib.__import__, import_list)  # noqa: F841
+        modules = [importlib.import_module(mod) for mod in import_list]  # noqa: F841
 
     if funcname is not None:
         if hasattr(cls, funcname) is False:
