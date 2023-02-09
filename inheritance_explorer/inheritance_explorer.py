@@ -73,12 +73,13 @@ class ClassGraphTree:
         default_color: Optional[str] = "#000000",
         func_override_color: Optional[str] = "#ff0000",
         similarity_cutoff: Optional[float] = 0.75,
+        max_recursion_level: Optional[int] = 10000,
     ):
 
         self.baseclass = baseclass
         self.basename: str = baseclass.__name__
         self.funcname = funcname
-
+        self.max_recursion_level = max_recursion_level
         self._nodenum: int = 0
         self._node_list = []  # a list of unique ChildNodes
         self._node_map = {}  # map of global node index to node name
@@ -87,6 +88,7 @@ class ClassGraphTree:
         self._current_node = 1  # the current global node, must start at 1
         self._default_color = default_color
         self._override_color = func_override_color
+        self._graphviz_args_kwargs = {}
         self.similarity_container = None
         self.similarity_results = None
         self.similarity_cutoff = similarity_cutoff
@@ -121,18 +123,23 @@ class ClassGraphTree:
                 color = self._override_color
         return color
 
-    def check_subclasses(self, parent, parent_id: int, node_i: int) -> int:
-        for child in parent.__subclasses__():
-            color = self._get_new_node_color(child, parent)
-            new_node = _ChildNode(
-                child, node_i, parent=parent, parent_id=parent_id, color=color
-            )
-            self._node_list.append(new_node)
-            self._node_map[node_i] = new_node.child_name
-            if self.funcname and self._node_overrides_func(child, parent):
-                self._store_node_func_source(child, node_i)
-            node_i += 1
-            node_i = self.check_subclasses(child, node_i - 1, node_i)
+    def check_subclasses(
+        self, parent, parent_id: int, node_i: int, current_recursion_level: int
+    ) -> int:
+        if current_recursion_level <= self.max_recursion_level:
+            for child in parent.__subclasses__():
+                color = self._get_new_node_color(child, parent)
+                new_node = _ChildNode(
+                    child, node_i, parent=parent, parent_id=parent_id, color=color
+                )
+                self._node_list.append(new_node)
+                self._node_map[node_i] = new_node.child_name
+                if self.funcname and self._node_overrides_func(child, parent):
+                    self._store_node_func_source(child, node_i)
+                node_i += 1
+                node_i = self.check_subclasses(
+                    child, node_i - 1, node_i, current_recursion_level + 1
+                )
         return node_i
 
     def _store_node_func_source(self, clss, current_node: int):
@@ -177,7 +184,7 @@ class ClassGraphTree:
         # now check all the children
         self._current_node += 1
         _ = self.check_subclasses(
-            self.baseclass, self._current_node - 1, self._current_node
+            self.baseclass, self._current_node - 1, self._current_node, 0
         )
 
         # construct the full similarity matrix
@@ -248,20 +255,25 @@ class ClassGraphTree:
                         )
                         dot.add_edge(new_edge)
 
-        self._graph = dot
+        return dot
 
     _graph = None
 
-    @property
-    def graph(self) -> pydot.Dot:
-        """a GraphViz dot graph of the class hierarchy"""
-        if self._graph is None:
-            self._build_graph()
+    # @property
+    def graph(self, *args, include_similarity: bool = True, **kwargs) -> pydot.Dot:
+        """a GraphViz dot graph of the class hierarchy using pydot"""
+        # if self._graph is None:
+        self._graph = self._build_graph(
+            *args, include_similarity=include_similarity, **kwargs
+        )
         return self._graph
 
-    def show_graph(self, env: str = "notebook", format: str = "png"):
+    def set_graphviz_args_kwargs(self, *args, **kwargs):
+        self._graphviz_args_kwargs = {"args": args, "kwargs": kwargs}
+
+    def show_graph(self, *args, env: str = "notebook", format: str = "png", **kwargs):
         """display a static GraphViz graph"""
-        return _show_graph(self.graph, env=env, format=format)
+        return _show_graph(self.graph(*args, **kwargs), env=env, format=format)
 
     def plot_similarity(
         self,

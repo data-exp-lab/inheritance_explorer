@@ -63,6 +63,6 @@ def map_class(module_class, output_file, output_format, import_list, funcname):
     if output_format is None and file_extension == "":
         fmt = "svg"
 
-    cgt.graph.write(output_file, format=fmt)
+    cgt.graph().write(output_file, format=fmt)
 
     return 0

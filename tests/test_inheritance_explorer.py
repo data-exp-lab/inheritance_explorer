@@ -30,11 +30,13 @@ def test_class_graph(cgt):
     # make sure the graph builds
     for in_sim in [True, False]:
         cgt = ClassGraphTree(ClassForTesting, "use_this_func")
-        cgt._build_graph(include_similarity=in_sim)
-        assert isinstance(cgt.graph, pydot.Dot)
+        cgraph = cgt.graph(include_similarity=in_sim)
+        assert isinstance(cgraph, pydot.Dot)
     cgt = ClassGraphTree(ClassForTesting, "use_this_func")
-    cgt._build_graph(graph_type="graph")
-    assert isinstance(cgt.graph, pydot.Dot)
+    assert isinstance(cgt.graph(graph_type="graph"), pydot.Dot)
+
+    # try some graphviz keywords, just make sure they dont error:
+    _ = cgt.graph(ratio="fill", size="16,10!")
 
 
 def test_class_graph_no_function():
@@ -105,3 +107,12 @@ def test_interactive(cgt):
     _ = cgt.build_interactive_graph(include_similarity=False)
     _ = cgt.show_graph()
     _ = cgt.show_graph(env=None)
+
+
+@pytest.mark.parametrize("max_recursion_level", (0, 1))
+def test_recursion_level(max_recursion_level):
+    cgt = ClassGraphTree(
+        ClassForTesting, "use_this_func", max_recursion_level=max_recursion_level
+    )
+    n_nodes = len(cgt._node_list)
+    assert n_nodes == 3 + max_recursion_level
