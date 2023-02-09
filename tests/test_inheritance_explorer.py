@@ -116,3 +116,13 @@ def test_recursion_level(max_recursion_level):
     )
     n_nodes = len(cgt._node_list)
     assert n_nodes == 3 + max_recursion_level
+
+
+def test_class_exclusion():
+    cgt = ClassGraphTree(
+        ClassForTesting,
+        "use_this_func",
+        classes_to_exclude=["ClassForTesting2"],
+    )
+    for node in cgt._node_list:
+        assert node.child_name != "ClassForTesting2"

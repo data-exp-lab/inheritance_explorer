@@ -1,7 +1,7 @@
 import collections
 import inspect
 import textwrap
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -55,14 +55,20 @@ class ClassGraphTree:
     ----------
 
     baseclass
-       the starting base class to begin mapping from
+        the starting base class to begin mapping from
     funcname: str
-       (optional) the name of a function to watch for overrides
+        (optional) the name of a function to watch for overrides
     default_color: str
-       (optional) the default outline color of nodes, in any graphviz string
+        (optional) the default outline color of nodes, in any graphviz string
     func_override_color: str
-       (optional) the outline color of nodes that override funcname, in any
-       graphviz string
+        (optional) the outline color of nodes that override funcname, in any
+        graphviz string
+    max_recursion_level: int
+        (optional) the max number of recrusion levels to map to. A value of 0
+        will show only the immediate children of the provided class. Default is
+        set to 500.
+    classes_to_exclude : List[str]
+        (optional) a list of class names to exclude from the mapping.
 
     """
 
@@ -73,7 +79,8 @@ class ClassGraphTree:
         default_color: Optional[str] = "#000000",
         func_override_color: Optional[str] = "#ff0000",
         similarity_cutoff: Optional[float] = 0.75,
-        max_recursion_level: Optional[int] = 10000,
+        max_recursion_level: Optional[int] = 500,
+        classes_to_exclude: Optional[List[str]] = None,
     ):
 
         self.baseclass = baseclass
@@ -92,6 +99,9 @@ class ClassGraphTree:
         self.similarity_container = None
         self.similarity_results = None
         self.similarity_cutoff = similarity_cutoff
+        if classes_to_exclude is None:
+            classes_to_exclude = []
+        self.classes_to_exclude = classes_to_exclude
         self._build()
         self._node_map_r = {v: k for k, v in self._node_map.items()}  # name to index
 
@@ -128,18 +138,19 @@ class ClassGraphTree:
     ) -> int:
         if current_recursion_level <= self.max_recursion_level:
             for child in parent.__subclasses__():
-                color = self._get_new_node_color(child, parent)
-                new_node = _ChildNode(
-                    child, node_i, parent=parent, parent_id=parent_id, color=color
-                )
-                self._node_list.append(new_node)
-                self._node_map[node_i] = new_node.child_name
-                if self.funcname and self._node_overrides_func(child, parent):
-                    self._store_node_func_source(child, node_i)
-                node_i += 1
-                node_i = self.check_subclasses(
-                    child, node_i - 1, node_i, current_recursion_level + 1
-                )
+                if child.__name__ not in self.classes_to_exclude:
+                    color = self._get_new_node_color(child, parent)
+                    new_node = _ChildNode(
+                        child, node_i, parent=parent, parent_id=parent_id, color=color
+                    )
+                    self._node_list.append(new_node)
+                    self._node_map[node_i] = new_node.child_name
+                    if self.funcname and self._node_overrides_func(child, parent):
+                        self._store_node_func_source(child, node_i)
+                    node_i += 1
+                    node_i = self.check_subclasses(
+                        child, node_i - 1, node_i, current_recursion_level + 1
+                    )
         return node_i
 
     def _store_node_func_source(self, clss, current_node: int):
