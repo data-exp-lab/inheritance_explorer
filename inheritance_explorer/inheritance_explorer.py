@@ -462,9 +462,13 @@ class ClassGraphTree:
         return src_dict
 
     def display_code_comparison(self):
+        """
+        show the code comparison widget
+        """
+
         # add a check that we are running from a notebook?
         if self.funcname is not None:
-            from inheritance_explorer.widget_support import display_code_compare
+            from inheritance_explorer._widget_support import display_code_compare
 
             display_code_compare(self)
 
