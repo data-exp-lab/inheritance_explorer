@@ -1,0 +1,4 @@
+napari
+pyQT5
+yt-napari
+napari-allencell-segmenter

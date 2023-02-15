@@ -461,6 +461,13 @@ class ClassGraphTree:
             src_dict[src_key] = self.get_source_code(src_key)
         return src_dict
 
+    def display_code_comparison(self):
+        # add a check that we are running from a notebook?
+        if self.funcname is not None:
+            from inheritance_explorer.widget_support import display_code_compare
+
+            display_code_compare(self)
+
 
 def _show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
     # return a GraphViz dot graph in a jupyter-friendly format.
