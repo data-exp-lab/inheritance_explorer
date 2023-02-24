@@ -2,6 +2,10 @@
 History
 =======
 
+v0.1.2
+------
+* Add missing requirements
+
 v0.1.1
 ------
 * Documentation updates

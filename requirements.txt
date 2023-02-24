@@ -5,3 +5,5 @@ matplotlib
 pyvis
 networkx
 click
+ipywidgets
+jupyterlab
