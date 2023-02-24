@@ -28,14 +28,6 @@ inheritance\_explorer.similarity module
    :undoc-members:
    :show-inheritance:
 
-inheritance\_explorer.widget\_support module
---------------------------------------------
-
-.. automodule:: inheritance_explorer.widget_support
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
