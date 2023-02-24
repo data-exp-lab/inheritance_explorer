@@ -1,15 +1,13 @@
-Welcome to inheritance_explorer's documentation!
-======================================
+.. include:: ../README.rst
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
    :caption: Contents:
 
-   readme
-   installation
-   usage
+   Getting Started <quickstart>
    examples
-   modules
+   API <modules>
    contributing
    authors
    history

@@ -4,7 +4,7 @@ import pydot
 import pytest
 
 from inheritance_explorer._testing import ClassForTesting
-from inheritance_explorer.inheritance_explorer import ChildNode, ClassGraphTree
+from inheritance_explorer.inheritance_explorer import ClassGraphTree, _ChildNode
 
 
 @pytest.fixture()
@@ -13,8 +13,8 @@ def cgt():
 
 
 def test_child():
-    child_class = ChildNode
-    node = ChildNode(child_class, 1)
+    child_class = _ChildNode
+    node = _ChildNode(child_class, 1)
     assert type(node.child_id) == str
     assert node.parent_id is None
 
@@ -30,11 +30,13 @@ def test_class_graph(cgt):
     # make sure the graph builds
     for in_sim in [True, False]:
         cgt = ClassGraphTree(ClassForTesting, "use_this_func")
-        cgt.build_graph(include_similarity=in_sim)
-        assert isinstance(cgt.graph, pydot.Dot)
+        cgraph = cgt.graph(include_similarity=in_sim)
+        assert isinstance(cgraph, pydot.Dot)
     cgt = ClassGraphTree(ClassForTesting, "use_this_func")
-    cgt.build_graph(graph_type="graph")
-    assert isinstance(cgt.graph, pydot.Dot)
+    assert isinstance(cgt.graph(graph_type="graph"), pydot.Dot)
+
+    # try some graphviz keywords, just make sure they dont error:
+    _ = cgt.graph(ratio="fill", size="16,10!")
 
 
 def test_class_graph_no_function():
@@ -105,3 +107,22 @@ def test_interactive(cgt):
     _ = cgt.build_interactive_graph(include_similarity=False)
     _ = cgt.show_graph()
     _ = cgt.show_graph(env=None)
+
+
+@pytest.mark.parametrize("max_recursion_level", (0, 1))
+def test_recursion_level(max_recursion_level):
+    cgt = ClassGraphTree(
+        ClassForTesting, "use_this_func", max_recursion_level=max_recursion_level
+    )
+    n_nodes = len(cgt._node_list)
+    assert n_nodes == 3 + max_recursion_level
+
+
+def test_class_exclusion():
+    cgt = ClassGraphTree(
+        ClassForTesting,
+        "use_this_func",
+        classes_to_exclude=["ClassForTesting2"],
+    )
+    for node in cgt._node_list:
+        assert node.child_name != "ClassForTesting2"

@@ -52,7 +52,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "inheritance_explorer"
-copyright = "2022, Chris Havlin"
+copyright = "2023, Chris Havlin"
 author = "Chris Havlin"
 
 # The version info for the project you're documenting, acts as replacement

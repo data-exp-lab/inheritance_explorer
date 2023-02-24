@@ -1,8 +1,7 @@
-"""Main module."""
 import collections
 import inspect
 import textwrap
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -15,7 +14,7 @@ from pyvis.network import Network
 from inheritance_explorer.similarity import PycodeSimilarity
 
 
-class ChildNode:
+class _ChildNode:
     def __init__(
         self,
         child: Any,
@@ -49,6 +48,30 @@ class ChildNode:
 
 
 class ClassGraphTree:
+    """
+    A hierarchical class graph container.
+
+    Parameters
+    ----------
+
+    baseclass
+        the starting base class to begin mapping from
+    funcname: str
+        (optional) the name of a function to watch for overrides
+    default_color: str
+        (optional) the default outline color of nodes, in any graphviz string
+    func_override_color: str
+        (optional) the outline color of nodes that override funcname, in any
+        graphviz string
+    max_recursion_level: int
+        (optional) the max number of recrusion levels to map to. A value of 0
+        will show only the immediate children of the provided class. Default is
+        set to 500.
+    classes_to_exclude : List[str]
+        (optional) a list of class names to exclude from the mapping.
+
+    """
+
     def __init__(
         self,
         baseclass: Any,
@@ -56,21 +79,14 @@ class ClassGraphTree:
         default_color: Optional[str] = "#000000",
         func_override_color: Optional[str] = "#ff0000",
         similarity_cutoff: Optional[float] = 0.75,
+        max_recursion_level: Optional[int] = 500,
+        classes_to_exclude: Optional[List[str]] = None,
     ):
-        """
-        baseclass:
-            the starting base class to begin mapping from
-        funcname:
-            the name of a function to watch for overrides
-        default_color: t
-            he default outline color of nodes, in any graphviz string
-        func_override_color:
-            the outline color of nodes that override funcname, in any graphviz string
-        """
+
         self.baseclass = baseclass
         self.basename: str = baseclass.__name__
         self.funcname = funcname
-
+        self.max_recursion_level = max_recursion_level
         self._nodenum: int = 0
         self._node_list = []  # a list of unique ChildNodes
         self._node_map = {}  # map of global node index to node name
@@ -79,10 +95,14 @@ class ClassGraphTree:
         self._current_node = 1  # the current global node, must start at 1
         self._default_color = default_color
         self._override_color = func_override_color
+        self._graphviz_args_kwargs = {}
         self.similarity_container = None
         self.similarity_results = None
         self.similarity_cutoff = similarity_cutoff
-        self.build()
+        if classes_to_exclude is None:
+            classes_to_exclude = []
+        self.classes_to_exclude = classes_to_exclude
+        self._build()
         self._node_map_r = {v: k for k, v in self._node_map.items()}  # name to index
 
     def _get_source_info(self, obj) -> Optional[str]:
@@ -113,18 +133,24 @@ class ClassGraphTree:
                 color = self._override_color
         return color
 
-    def check_subclasses(self, parent, parent_id: int, node_i: int) -> int:
-        for child in parent.__subclasses__():
-            color = self._get_new_node_color(child, parent)
-            new_node = ChildNode(
-                child, node_i, parent=parent, parent_id=parent_id, color=color
-            )
-            self._node_list.append(new_node)
-            self._node_map[node_i] = new_node.child_name
-            if self.funcname and self._node_overrides_func(child, parent):
-                self._store_node_func_source(child, node_i)
-            node_i += 1
-            node_i = self.check_subclasses(child, node_i - 1, node_i)
+    def check_subclasses(
+        self, parent, parent_id: int, node_i: int, current_recursion_level: int
+    ) -> int:
+        if current_recursion_level <= self.max_recursion_level:
+            for child in parent.__subclasses__():
+                if child.__name__ not in self.classes_to_exclude:
+                    color = self._get_new_node_color(child, parent)
+                    new_node = _ChildNode(
+                        child, node_i, parent=parent, parent_id=parent_id, color=color
+                    )
+                    self._node_list.append(new_node)
+                    self._node_map[node_i] = new_node.child_name
+                    if self.funcname and self._node_overrides_func(child, parent):
+                        self._store_node_func_source(child, node_i)
+                    node_i += 1
+                    node_i = self.check_subclasses(
+                        child, node_i - 1, node_i, current_recursion_level + 1
+                    )
         return node_i
 
     def _store_node_func_source(self, clss, current_node: int):
@@ -155,12 +181,12 @@ class ClassGraphTree:
         sim = self.similarity_container.run(self._override_src, reference=reference)
         return sim
 
-    def build(self):
+    def _build(self):
 
         # construct the first node
         color = self._get_baseclass_color()
         self._node_list.append(
-            ChildNode(self.baseclass, self._current_node, parent=None, color=color)
+            _ChildNode(self.baseclass, self._current_node, parent=None, color=color)
         )
         self._node_map[self._current_node] = self._node_list[-1].child_name
         if self.funcname:
@@ -169,7 +195,7 @@ class ClassGraphTree:
         # now check all the children
         self._current_node += 1
         _ = self.check_subclasses(
-            self.baseclass, self._current_node - 1, self._current_node
+            self.baseclass, self._current_node - 1, self._current_node, 0
         )
 
         # construct the full similarity matrix
@@ -196,7 +222,7 @@ class ClassGraphTree:
                 similarity_sets[this_child] = set(node_ids.tolist())
         self.similarity_sets = similarity_sets
 
-    def build_graph(
+    def _build_graph(
         self, *args, include_similarity: bool = True, **kwargs
     ) -> pydot.Dot:
         """
@@ -240,18 +266,25 @@ class ClassGraphTree:
                         )
                         dot.add_edge(new_edge)
 
-        self._graph = dot
+        return dot
 
     _graph = None
 
-    @property
-    def graph(self) -> pydot.Dot:
-        if self._graph is None:
-            self.build_graph()
+    # @property
+    def graph(self, *args, include_similarity: bool = True, **kwargs) -> pydot.Dot:
+        """a GraphViz dot graph of the class hierarchy using pydot"""
+        # if self._graph is None:
+        self._graph = self._build_graph(
+            *args, include_similarity=include_similarity, **kwargs
+        )
         return self._graph
 
-    def show_graph(self, env: str = "notebook", format: str = "png"):
-        return show_graph(self.graph, env=env, format=format)
+    def set_graphviz_args_kwargs(self, *args, **kwargs):
+        self._graphviz_args_kwargs = {"args": args, "kwargs": kwargs}
+
+    def show_graph(self, *args, env: str = "notebook", format: str = "png", **kwargs):
+        """display a static GraphViz graph"""
+        return _show_graph(self.graph(*args, **kwargs), env=env, format=format)
 
     def plot_similarity(
         self,
@@ -315,7 +348,7 @@ class ClassGraphTree:
     ) -> Network:
 
         """
-        build a digraph from the current node list
+        build an interactive Network graph from the current node list
 
         Parameters
         ----------
@@ -325,6 +358,11 @@ class ClassGraphTree:
             include edges for similar code (default True)
         **kwargs:
             any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+
+        Returns
+        -------
+        Network
+            the pyvis.Network representation of the class hierarchy.
         """
 
         grph = nx.Graph(directed=True)
@@ -423,9 +461,20 @@ class ClassGraphTree:
             src_dict[src_key] = self.get_source_code(src_key)
         return src_dict
 
+    def display_code_comparison(self):
+        """
+        show the code comparison widget
+        """
 
-def show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
+        # add a check that we are running from a notebook?
+        if self.funcname is not None:
+            from inheritance_explorer._widget_support import display_code_compare
 
+            display_code_compare(self)
+
+
+def _show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):
+    # return a GraphViz dot graph in a jupyter-friendly format.
     create_func = getattr(dot_graph, f"create_{format}")
     graph = create_func()
 
