@@ -7,5 +7,15 @@ include README.rst
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
+recursive-exclude docs/_build *
+recursive-exclude docs/examples/.ipynb_checkpoints *
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+include *.txt
+exclude .pre-commit-config.yaml
+exclude .editorconfig
+include *.yaml
+include Makefile
+recursive-include docs *.ipynb
+recursive-include docs *.txt
+
