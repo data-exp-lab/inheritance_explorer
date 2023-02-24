@@ -72,46 +72,31 @@ development::
     $ cd inheritance_explorer/
     $ python setup.py develop
 
-4. Create a branch for local development::
+4. (optional) Set up extra packages and pre-commit. There are number of packages
+useful for development in ``requirements_dev.txt``. You can also use pre-commit to
+make sure your changes will pass the style-related CI tests::
+
+    $ python -m pip install -r requirements_dev.tx
+    $ pre-commit install
+
+5. Now, to make changes, create a branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+6. When you're done making changes, check that your changes pass the
+   tests:
 
-    $ flake8 inheritance_explorer tests
-    $ python setup.py test or pytest
-    $ tox
+    $ pytest -v
 
-   To get flake8 and tox, just pip install them into your virtualenv.
-
-6. Commit your changes and push your branch to GitHub::
+7. Commit your changes and push your branch to GitHub. Note that if you
+have installed pre-commit, the pre-commit linting will run and you may need
+to re-add any changed files before the commit succeeds::
 
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
-
-Pull Request Guidelines
------------------------
-
-Before you submit a pull request, check that it meets these guidelines:
-
-1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-   https://travis-ci.com/chrishavlin/inheritance_explorer/pull_requests
-   and make sure that the tests pass for all supported Python versions.
-
-Tips
-----
-
-To run a subset of tests::
-
-$ pytest tests.test_inheritance_explorer
+8. Submit a pull request through the GitHub website.
 
