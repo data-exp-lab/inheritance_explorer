@@ -26,8 +26,9 @@ you to produce graphs that recursively map out child classes from a given
 starting class. There are a number of useful applications: from learning structures
 of unfamiliar code bases to identifying duplicate code.
 
-.. image:: https://raw.githubusercontent.com/chrishavlin/inheritance_explorer/main/docs/resources/tree_shot.png
+.. image:: https://github.com/data-exp-lab/inheritance_explorer/raw/main/docs/resources/interactive_yt_ds_parse_param.gif
 
+Useful links: `github repository <https://github.com/data-exp-lab/inheritance_explorer>`_, `full documentation <https://inheritance-explorer.readthedocs.io/en/latest/>`_
 
 Installation
 ------------
@@ -110,7 +111,7 @@ that is tracked will be run through a code-similarity calculation. Cases where t
 similarity fraction is above a cutoff value (default of .75), the two nodes will be
 connected on the resulting graph:
 
-TODO : INSERT IMAGE
+.. image:: https://github.com/data-exp-lab/inheritance_explorer/raw/main/docs/resources/mpl_axesclear.png
 
 Additionally, you can inspect the source code itself for any of the classes that
 define it using ``cgt.get_source_code(class_name)``. If in a jupyter notebook,
@@ -128,4 +129,4 @@ Command line usage
 ++++++++++++++++++
 
 ``inheritance_explorer`` provides some command line functionality, check the
-full documentation for details.
+`full documentation <https://inheritance-explorer.readthedocs.io/en/latest/>`_ for details.
