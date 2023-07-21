@@ -40,36 +40,41 @@ def _display_code_compare(
     class_dropdown_2 = ipywidgets.Dropdown(options=names_classes.copy())
 
     defined_at = ipywidgets.HTML()
-    source = ipywidgets.Output(layout=ipywidgets.Layout(width="100%", height="50em"))
+    source_1 = ipywidgets.Output(layout=ipywidgets.Layout(width="100%", height="50em"))
+    source_2 = ipywidgets.Output(layout=ipywidgets.Layout(width="100%", height="50em"))
 
-    def update_source(event):
+    def _get_source(class_i) -> str:
+        node_id = cgt._node_map_r[class_i]
+        src_id, rawsrc = find_closest_source(cgt, node_id)
+
+        this_src = f"\n\n## {class_i}.{cgt.funcname}"
+        if src_id is None:
+            this_src += ": could not find source code."
+        elif src_id != node_id:
+            definining_class = cgt._node_map[src_id]
+            this_src += f" defined in {definining_class}:"
+
+        this_src = this_src + "\n\n```python\n" + textwrap.dedent(rawsrc) + "\n\n```"
+        return this_src
+
+    def update_source_1(event):
         class_1 = class_dropdown_1.value
+        this_src = _get_source(class_1)
+        source_1.clear_output()
+        with source_1:
+            display(Markdown(data=this_src))
+
+    def update_source_2(event):
         class_2 = class_dropdown_2.value
-        funcsource_string = ""
+        this_src = _get_source(class_2)
+        source_2.clear_output()
+        with source_2:
+            display(Markdown(data=this_src))
 
-        for class_i in (class_1, class_2):
-            node_id = cgt._node_map_r[class_i]
-            src_id, rawsrc = find_closest_source(cgt, node_id)
-
-            this_src = f"\n\n## {class_i}.{cgt.funcname}"
-            if src_id is None:
-                this_src += ": could not find source code."
-            elif src_id != node_id:
-                definining_class = cgt._node_map[src_id]
-                this_src += f" defined in {definining_class}:"
-
-            this_src = (
-                this_src + "\n\n```python\n" + textwrap.dedent(rawsrc) + "\n\n```"
-            )
-            funcsource_string += this_src
-
-        source.clear_output()
-        with source:
-            display(Markdown(data=funcsource_string))
-
-    class_dropdown_1.observe(update_source, ["value"])
-    class_dropdown_2.observe(update_source, ["value"])
-    update_source(None)
+    class_dropdown_1.observe(update_source_1, ["value"])
+    class_dropdown_2.observe(update_source_2, ["value"])
+    update_source_1(None)
+    update_source_2(None)
 
     if class_1_name is not None:
         class_dropdown_1.value = class_1_name
@@ -77,4 +82,12 @@ def _display_code_compare(
     if class_2_name is not None:
         class_dropdown_1.value = class_2_name
 
-    display(ipywidgets.VBox([class_dropdown_1, class_dropdown_2, defined_at, source]))
+    display(
+        ipywidgets.HBox(
+            [
+                ipywidgets.VBox([class_dropdown_1, source_1]),
+                ipywidgets.VBox([class_dropdown_2, source_2]),
+                defined_at,
+            ]
+        )
+    )
