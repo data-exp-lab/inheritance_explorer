@@ -8,14 +8,15 @@ from within a Jupyter notebook.
 To use it, simply construct a ``ClassGraphTree`` with a function to track then
 call ``display_code_comparison()``.
 
-For example, the following maps the child classes of the primary ``Dataset``
-class in ``yt`` and tracks the ``_is_valid`` function, which is a required function
-for all children classes::
+For example, the following maps the child classes of the ``BaseParticleIOHandler``
+class in ``yt`` and tracks the ``_read_particle_fields`` function, which is implemented across
+a large number of subclasses::
 
     from inheritance_explorer import ClassGraphTree
     import yt
-    base_class = yt.data_objects.static_output.Dataset
-    cgt = ClassGraphTree(base_class, funcname="_is_valid")
+    base_class = yt.utilities.io_handler.BaseParticleIOHandler
+    cgt = ClassGraphTree(base_class, funcname="_read_particle_fields")
+    cgt.display_code_comparison()
 
 The following screenshot shows the code comparison widget in a Jupyter notebook:
 
