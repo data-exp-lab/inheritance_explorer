@@ -11,8 +11,11 @@ build:
   tools:
     python: "3.10"
 
-# Optionally declare the Python requirements required to build your docs
+# installation, will result in pip install .[docs, dev]
 python:
-   install:
-   - requirements: requirements.txt
-   - requirements: requirements_dev.txt
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
+        - dev
