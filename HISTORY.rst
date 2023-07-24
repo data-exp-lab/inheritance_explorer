@@ -2,6 +2,11 @@
 History
 =======
 
+v0.1.3
+------
+* code comparison widget now uses a horizontal orientation
+* full switch to ``pyproject.toml``
+
 v0.1.2
 ------
 * Add missing requirements
