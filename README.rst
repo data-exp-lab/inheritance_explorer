@@ -125,8 +125,12 @@ you can view it with syntax highlighting with
 For a complete description of the code similarity calculation and how to
 modify it, check out the full documentation.
 
-Command line usage
-++++++++++++++++++
+Additional Features
++++++++++++++++++++
 
-``inheritance_explorer`` provides some command line functionality, check the
-`full documentation <https://inheritance-explorer.readthedocs.io/en/latest/>`_ for details.
+The following additional features are described in more detail in the
+`full documentation <https://inheritance-explorer.readthedocs.io/en/latest/>`_:
+
+* `command line usage <https://inheritance-explorer.readthedocs.io/en/latest/examples/command_line_usage.html>`_
+* `code comparison widget for Jupyter <https://inheritance-explorer.readthedocs.io/en/latest/examples/ex_004_code_comparison.html>`_
+
