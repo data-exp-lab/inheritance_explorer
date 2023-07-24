@@ -1,9 +1,0 @@
-pydot
-pycode_similar
-numpy
-matplotlib
-pyvis
-networkx
-click
-ipywidgets
-jupyterlab
