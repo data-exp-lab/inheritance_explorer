@@ -234,8 +234,8 @@ class ClassGraphTree:
             any arg accepted by pydot.Dot
         include_similarity: bool
             include edges for similar code (default True)
-        **kwargs:
-            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+        kwargs:
+            any additional keyword arguments are passed to graphviz.Digraph
         """
 
         gtype = "digraph"
@@ -344,7 +344,13 @@ class ClassGraphTree:
         return sim_labels, ax
 
     def build_interactive_graph(
-        self, include_similarity: bool = True, **kwargs
+        self,
+        include_similarity: bool = True,
+        node_style: dict = None,
+        edge_style: dict = None,
+        similarity_edge_style: dict = None,
+        override_node_color: Union[str, tuple] = None,
+        **kwargs,
     ) -> Network:
 
         """
@@ -352,12 +358,23 @@ class ClassGraphTree:
 
         Parameters
         ----------
-        *args:
-            any arg accepted by pydot.Dot
         include_similarity: bool
             include edges for similar code (default True)
-        **kwargs:
-            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+        node_style: dict
+            a dictionary of parameters to pass to pyvis.network.Network.add_node
+            note that these settings will be applied to **all** nodes.
+        edge_style: dict
+            a dictionary of parameters to pass to pyvis.network.Network.add_edge
+            note that these settings will be applied to **all** edges.
+        similarity_edge_style: dict
+            a dictionary of parameters to pass to pyvis.network.Network.add_edge
+            for the similarity links. Only used if include_similarity is True.
+        override_node_color: str or tuple
+            the color for nodes that over-ride the function being tracked. Only
+            used if the base ClassGraphTree was initialized with a ``funcname``
+            to track.
+        kwargs:
+            any additional keyword arguments are passed to pyvis.Network
 
         Returns
         -------
@@ -365,15 +382,37 @@ class ClassGraphTree:
             the pyvis.Network representation of the class hierarchy.
         """
 
+        if node_style is None:
+            node_style = {}
+        if edge_style is None:
+            edge_style = {}
+        if similarity_edge_style is None:
+            similarity_edge_style = {}
+
+        sim_node_physics = similarity_edge_style.pop("physics", False)
+        edge_physics = edge_style.pop("physics", True)
+
+        node_color = _validate_color(node_style.get("color", None), (0.7, 0.7, 0.7))
+        edge_color = _validate_color(edge_style.pop("color", None), (0.7, 0.7, 0.7))
+        sim_edge_color = _validate_color(
+            similarity_edge_style.pop("color", None), (0, 0.5, 1.0)
+        )
+        override_color = _validate_color(override_node_color, (0.5, 0.5, 1.0))
+
+        bgcolor = _validate_color(kwargs.pop("bgcolor", None), (1.0, 1.0, 1.0))
+        font_color = _validate_color(kwargs.pop("font_color", None), (0.0, 0.0, 0.0))
+
         grph = nx.Graph(directed=True)
 
         iset = 0
         for node in self._node_list:
             if node.color == "#000000":
-                # no override. show improve this...
-                hexcolor = rgb2hex((0.7, 0.7, 0.7))
+                clr_val = node_color
             else:
-                hexcolor = rgb2hex((0.5, 0.5, 1.0))
+                # this node is over-ridden, use over-ride color
+                clr_val = override_color
+
+            node_style["color"] = clr_val
 
             if node.parent:
                 parent_info = f"({node.parent.__name__})"
@@ -382,33 +421,37 @@ class ClassGraphTree:
             grph.add_node(
                 node.child_id,
                 title=f"{node.child_name}{parent_info}",
-                color=hexcolor,
+                **node_style,
             )
 
             if include_similarity:
                 if int(node.child_id) in self.similarity_sets:
-                    hexcolor = rgb2hex((0, 0.5, 1.0))
                     iset += 1
                     for similar_node_id in self.similarity_sets[int(node.child_id)]:
                         grph.add_edge(
                             node.child_id,
                             str(similar_node_id),
-                            color=hexcolor,
-                            physics=False,
+                            color=sim_edge_color,
+                            physics=sim_node_physics,
+                            **similarity_edge_style,
                         )
 
             arrowsop = {"from": {"enabled": True}}
+
             if node.parent:
                 grph.add_edge(
                     node.child_id,
                     node.parent_id,
-                    color=rgb2hex((0.7, 0.7, 0.7)),
-                    physics=True,
+                    color=edge_color,
+                    physics=edge_physics,
                     arrows=arrowsop,
+                    **edge_style,
                 )
 
         # return the interactive pyvis Network graph
-        network_wrapper = Network(notebook=True, **kwargs)
+        network_wrapper = Network(
+            notebook=True, bgcolor=bgcolor, font_color=font_color, **kwargs
+        )
         network_wrapper.from_nx(grph)
         return network_wrapper
 
@@ -471,6 +514,17 @@ class ClassGraphTree:
             from inheritance_explorer._widget_support import display_code_compare
 
             display_code_compare(self)
+
+
+def _validate_color(clr, default_rgb_tuple: tuple) -> str:
+    if clr is None:
+        return rgb2hex(default_rgb_tuple)
+    elif isinstance(clr, tuple):
+        return rgb2hex(clr)
+    elif isinstance(clr, str):
+        return clr
+    msg = f"clr has unexpected type: {type(clr)}"
+    raise TypeError(msg)
 
 
 def _show_graph(dot_graph: pydot.Dot, format: str = "svg", env: str = "notebook"):

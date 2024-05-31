@@ -109,6 +109,23 @@ def test_interactive(cgt):
     _ = cgt.show_graph(env=None)
 
 
+def test_interactive_styles(cgt):
+    node_style = {"size": 20.0, "color": "magenta"}
+    edge_style = {"weight": 5}
+    sim_style = {"color": (0.5, 1.0, 1.0), "weight": 5}
+    _ = cgt.build_interactive_graph(
+        width="500px",
+        height="500px",
+        bgcolor=(0.98, 0.98, 0.98),
+        font_color="black",
+        node_style=node_style,
+        edge_style=edge_style,
+        similarity_edge_style=sim_style,
+        override_node_color="black",
+        cdn_resources="in_line",
+    )
+
+
 @pytest.mark.parametrize("max_recursion_level", (0, 1))
 def test_recursion_level(max_recursion_level):
     cgt = ClassGraphTree(

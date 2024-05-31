@@ -9,6 +9,7 @@ Examples
     examples/command_line_usage.rst
     examples/ex_004_code_comparison.rst
     examples/ex_005_interactive_graph.rst
+    examples/ex_006_interactive_graph_styles.rst
 
 Example notebooks:
 
@@ -17,4 +18,5 @@ Example notebooks:
 - Example 003: :doc:`examples/command_line_usage`
 - Example 004: :doc:`examples/ex_004_code_comparison`
 - Example 005: :doc:`examples/ex_005_interactive_graph`
+- Example 006: :doc:`examples/ex_006_interactive_graph_styles`
 
