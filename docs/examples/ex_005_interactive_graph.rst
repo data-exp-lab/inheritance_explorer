@@ -4,6 +4,7 @@ Interactive Class Graph
 The ``inheritance_explorer`` relies on ``pyvis`` to construct interactive
 graphs. Given an existing ``ClassGraphTree``::
 
+    from yt.frontends import *
     from yt.data_objects.static_output import Dataset
     from inheritance_explorer import ClassGraphTree
 

@@ -234,8 +234,8 @@ class ClassGraphTree:
             any arg accepted by pydot.Dot
         include_similarity: bool
             include edges for similar code (default True)
-        **kwargs:
-            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+        kwargs:
+            any additional keyword arguments are passed to graphviz.Digraph
         """
 
         gtype = "digraph"
@@ -358,8 +358,6 @@ class ClassGraphTree:
 
         Parameters
         ----------
-        *args:
-            any arg accepted by pydot.Dot
         include_similarity: bool
             include edges for similar code (default True)
         node_style: dict
@@ -375,8 +373,8 @@ class ClassGraphTree:
             the color for nodes that over-ride the function being tracked. Only
             used if the base ClassGraphTree was initialized with a ``funcname``
             to track.
-        **kwargs:
-            any additional keyword arguments are passed to graphviz.Digraph(**kwargs)
+        kwargs:
+            any additional keyword arguments are passed to pyvis.Network
 
         Returns
         -------
@@ -409,10 +407,10 @@ class ClassGraphTree:
         iset = 0
         for node in self._node_list:
             if node.color == "#000000":
+                clr_val = node_color
+            else:
                 # this node is over-ridden, use over-ride color
                 clr_val = override_color
-            else:
-                clr_val = node_color
 
             node_style["color"] = clr_val
 
