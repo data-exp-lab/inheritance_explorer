@@ -160,9 +160,9 @@ class ClassGraphTree:
         f = getattr(clss, self.funcname)
         if isinstance(f, collections.abc.Callable):
             src = textwrap.dedent(inspect.getsource(f))
-            self._override_src_files[
-                current_node
-            ] = f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
+            self._override_src_files[current_node] = (
+                f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
+            )
             self._override_src[current_node] = src
 
     def check_source_similarity(
@@ -352,7 +352,6 @@ class ClassGraphTree:
         override_node_color: Union[str, tuple] = None,
         **kwargs,
     ) -> Network:
-
         """
         build an interactive Network graph from the current node list
 
