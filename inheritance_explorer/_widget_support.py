@@ -52,7 +52,7 @@ def _display_code_compare(
             this_src += ": could not find source code."
         elif src_id != node_id:
             definining_class = cgt._node_map[src_id]
-            this_src += f" defined in {definining_class}:"
+            this_src += f" defined in {definining_class}: "
 
         this_src = this_src + "\n\n```python\n" + textwrap.dedent(rawsrc) + "\n\n```"
         return this_src

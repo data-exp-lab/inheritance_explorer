@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 88
-target-version = ['py37']
+target-version = ['py310']
 
 [tool.isort]
 profile = "black"
@@ -16,7 +16,7 @@ name = "inheritance_explorer"
 version = "0.2.0"
 description = "A tool for exploring complex inheritance patters in python code"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     { name="Chris Havlin", email="chris.havlin@gmail.com" },
 ]
@@ -26,9 +26,9 @@ classifiers=[
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = ['pydot',
                 'pycode_similar',
@@ -65,10 +65,5 @@ docs = [
     "Sphinx==7.3.7",
     "jinja2==3.1.4",
     "nbsphinx",
-]
-lint = [
-    "black==22.8.0",
-    "isort==5.12.0",
-    "flake8==6.0.0"
 ]
 
