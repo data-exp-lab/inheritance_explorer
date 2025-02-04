@@ -11,6 +11,10 @@ build:
   tools:
     python: "3.10"
 
+sphinx:
+  # Path to your Sphinx configuration file.
+  configuration: docs/conf.py
+
 # installation, will result in pip install .[docs, dev]
 python:
   install:

@@ -15,7 +15,7 @@ def cgt():
 def test_child():
     child_class = _ChildNode
     node = _ChildNode(child_class, 1)
-    assert type(node.child_id) == str
+    assert isinstance(node.child_id, str)
     assert node.parent_id is None
 
 
