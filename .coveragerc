@@ -1,0 +1,5 @@
+[run]
+source = inheritance_explorer
+
+[report]
+fail_under = 97
