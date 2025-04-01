@@ -24,17 +24,32 @@ def find_closest_source(cgt: ClassGraphTree, node_id: int):
 # it does not, get base class source
 
 
-def display_code_compare(cgt: ClassGraphTree):
-    _display_code_compare(cgt)
+def display_code_compare(cgt: ClassGraphTree, include_overrides_only: bool = True):
+    _display_code_compare(cgt, include_overrides_only=include_overrides_only)
+
+
+def _get_class_names(
+    cgt: ClassGraphTree, include_overrides_only: bool = True
+) -> list[str]:
+    if include_overrides_only is False:
+        names_classes = [nm for nm in cgt._node_map_r.keys()]
+    else:
+        names_classes = []
+        for node_id in cgt._override_src.keys():
+            names_classes.append(cgt._node_map[node_id])
+
+    names_classes.sort()
+    return names_classes
 
 
 def _display_code_compare(
     cgt: ClassGraphTree,
     class_1_name: Optional[str] = None,
     class_2_name: Optional[str] = None,
+    include_overrides_only: bool = True,
 ):
-    names_classes = [i.child_name for i in cgt._node_list]
-    names_classes.sort()
+
+    names_classes = _get_class_names(cgt, include_overrides_only=include_overrides_only)
 
     class_dropdown_1 = ipywidgets.Dropdown(options=names_classes.copy())
     class_dropdown_2 = ipywidgets.Dropdown(options=names_classes.copy())

@@ -4,6 +4,7 @@ History
 
 v0.2.0dev 
 ---------
+* New keyword argument for ``display_code_comparison``,  ``include_overrides_only`` which when True (the default), only includes the classes that override the function of interest.
 * Improved typing (`PR 42 <https://github.com/data-exp-lab/inheritance_explorer/pull/42>`_)
 
 v0.2.0

@@ -23,3 +23,7 @@ The following screenshot shows the code comparison widget in a Jupyter notebook:
 .. image:: /resources/inherit_code_widget.gif
     :width: 800
 
+By default, the code comparison widget will only display child classes that override 
+the function being compared. To include all classes, set  ``include_overrides_only==False``
+when calling ``display_code_comparison``.
+
