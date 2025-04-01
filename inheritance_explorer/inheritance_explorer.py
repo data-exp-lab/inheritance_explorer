@@ -532,16 +532,22 @@ class ClassGraphTree:
             src_dict[src_key] = self.get_source_code(src_key)
         return src_dict
 
-    def display_code_comparison(self):
+    def display_code_comparison(self, include_overrides_only: bool = True):
         """
         show the code comparison widget
+
+        Parameters
+        ----------
+        include_overrides_only: bool
+            if True (default), only displays the classes that override the function
+            being compared.
         """
 
         # add a check that we are running from a notebook?
         if self.funcname is not None:
             from inheritance_explorer._widget_support import display_code_compare
 
-            display_code_compare(self)
+            display_code_compare(self, include_overrides_only=include_overrides_only)
 
 
 def _validate_color(clr, default_rgb_tuple: tuple[float, float, float]) -> str:
