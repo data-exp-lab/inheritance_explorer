@@ -73,8 +73,8 @@ def _display_code_compare(
 
     class_dropdown_1.observe(update_source_1, ["value"])
     class_dropdown_2.observe(update_source_2, ["value"])
-    update_source_1(None)
-    update_source_2(None)
+    update_source_1(None)  # type: ignore[no-untyped-call]
+    update_source_2(None)  # type: ignore[no-untyped-call]
 
     if class_1_name is not None:
         class_dropdown_1.value = class_1_name

@@ -4,7 +4,11 @@ import pydot
 import pytest
 
 from inheritance_explorer._testing import ClassForTesting
-from inheritance_explorer.inheritance_explorer import ClassGraphTree, _ChildNode
+from inheritance_explorer.inheritance_explorer import (
+    ClassGraphTree,
+    _ChildNode,
+    _validate_color,
+)
 
 
 @pytest.fixture()
@@ -55,10 +59,15 @@ def test_source_code_return():
 
     with pytest.raises(ValueError, match="does not override the chosen"):
         _ = cgt.get_source_code("ClassForTesting3")
+
+    with pytest.raises(ValueError, match="does not override the chosen"):
         _ = cgt.get_source_code(cgt._node_map_r["ClassForTesting3"])
 
-    with pytest.raises(KeyError, match="Could not find node"):
+    with pytest.raises(ValueError, match="Could not find node"):
         _ = cgt.get_source_code(10)
+
+    with pytest.raises(ValueError, match="Could not find node"):
+        _ = cgt.get_source_code("does_not_exist")
 
 
 def test_multi_source_code():
@@ -73,14 +82,14 @@ def test_multi_source_code():
         assert src_key in src_dict
 
     src_dict_nodes = [cgt._node_map_r[c] for c in test_classes]
-    src_dict = cgt.get_multiple_source_code(src_dict_nodes[0], *src_dict_nodes[1:])
-    assert len(src_dict) == len(test_classes)
+    src_dict_2 = cgt.get_multiple_source_code(src_dict_nodes[0], *src_dict_nodes[1:])
+    assert len(src_dict_2) == len(test_classes)
 
     with pytest.raises(ValueError, match="does not override the chosen"):
         _ = cgt.get_multiple_source_code("ClassForTesting", "ClassForTesting3")
 
-    with pytest.raises(KeyError, match="Could not find node"):
-        _ = cgt.get_multiple_source_code("ClassForTesting", 10)
+    with pytest.raises(ValueError, match="Could not find node"):
+        _ = cgt.get_multiple_source_code(0, 10)
 
 
 @pytest.mark.parametrize(
@@ -143,3 +152,67 @@ def test_class_exclusion():
     )
     for node in cgt._node_list:
         assert node.child_name != "ClassForTesting2"
+
+
+def test_errors_no_source_override():
+    # _get_source_info
+    cgt = ClassGraphTree(ClassForTesting)
+    with pytest.raises(
+        RuntimeError, match="this functionality requires function tracking."
+    ):
+        _ = cgt._get_source_info(ClassForTesting)
+
+    with pytest.raises(
+        RuntimeError, match="this functionality requires function tracking."
+    ):
+        cgt._store_node_func_source(ClassForTesting, 0)
+
+    cgt = ClassGraphTree(ClassForTesting, funcname="use_this_func")
+    # monkey patch the funcname to make the callable fail
+    cgt.funcname = "misc_attr"
+    result = cgt._get_source_info(ClassForTesting)
+    assert result is None
+
+
+def test_missing_source_node(cgt):
+    with pytest.raises(ValueError, match="Could not find node for not_a_node"):
+        cgt.get_source_code("not_a_node")
+
+
+def test_class_graph_special_cases(cgt):
+
+    # map out the structure of SimilarityContainer, track the run method
+    assert cgt._node_list[1].parent_id == "1"
+    with pytest.raises(
+        ValueError, match="unexpected value, similarity_container_class"
+    ):
+        _ = cgt.check_source_similarity(similarity_container_class="not_a_thing")
+
+    cgt.check_source_similarity(reference=1)
+
+
+def test_set_graphviz_args(cgt):
+
+    cgt.set_graphviz_args_kwargs(1, 2, 3, other_arg="hello", another=True)
+
+    d = cgt._graphviz_args_kwargs
+    assert all([val in d["args"] for val in (1, 2, 3)])
+    assert "other_arg" in d["kwargs"]
+    assert d["kwargs"]["other_arg"] == "hello"
+    assert "another" in d["kwargs"]
+    assert d["kwargs"]["another"] is True
+
+
+@pytest.mark.parametrize(
+    "input_clr,expected",
+    [((0.0, 0.0, 0.0), "#000000"), (None, "#ffffff"), ("#000000", "#000000")],
+)
+def test_validate_color(input_clr, expected):
+    default_clr = (1.0, 1.0, 1.0)
+
+    assert _validate_color(input_clr, default_rgb_tuple=default_clr) == expected
+
+
+def test_validate_color_invalid():
+    with pytest.raises(TypeError, match="clr has unexpected type"):
+        _validate_color(100, (1.0, 1.0, 1.0))

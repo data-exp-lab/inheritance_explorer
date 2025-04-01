@@ -38,5 +38,5 @@ def test_map_class_no_format(tmp_path):
 def test_map_class_bad():
     runner = CliRunner()
     arg_list = ["numpy.float64", "whatever.png", "--funcname", "notafunc"]
-    result = runner.invoke(map_class, arg_list, catch_exceptions=AttributeError)
+    result = runner.invoke(map_class, arg_list, catch_exceptions=True)
     assert isinstance(result.exception, AttributeError)

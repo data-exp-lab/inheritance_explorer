@@ -1,11 +1,12 @@
 import collections
 import inspect
 import textwrap
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, OrderedDict
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import numpy.typing as npt
 import pydot
 from matplotlib.axes import Axes
 from matplotlib.colors import rgb2hex
@@ -24,7 +25,7 @@ class _ChildNode:
         color: Optional[str] = "#000000",
     ):
         self.child = child
-        self.child_name = child.__name__
+        self.child_name: str = str(child.__name__)
         self._child_id = child_id
         self.parent = parent
 
@@ -41,10 +42,13 @@ class _ChildNode:
         return str(self._child_id)
 
     @property
-    def parent_id(self) -> str:
+    def parent_id(self) -> str | None:
         if self._parent_id:
             return str(self._parent_id)
-        return
+        return None
+
+
+_similarity_container_types = PycodeSimilarity
 
 
 class ClassGraphTree:
@@ -76,38 +80,44 @@ class ClassGraphTree:
         self,
         baseclass: Any,
         funcname: Optional[str] = None,
-        default_color: Optional[str] = "#000000",
-        func_override_color: Optional[str] = "#ff0000",
-        similarity_cutoff: Optional[float] = 0.75,
-        max_recursion_level: Optional[int] = 500,
-        classes_to_exclude: Optional[List[str]] = None,
+        default_color: str = "#000000",
+        func_override_color: str = "#ff0000",
+        similarity_cutoff: float = 0.75,
+        max_recursion_level: int = 500,
+        classes_to_exclude: Optional[list[str]] = None,
     ):
 
         self.baseclass = baseclass
         self.basename: str = baseclass.__name__
         self.funcname = funcname
+        self._tracking_function = self.funcname is not None
         self.max_recursion_level = max_recursion_level
         self._nodenum: int = 0
-        self._node_list = []  # a list of unique ChildNodes
-        self._node_map = {}  # map of global node index to node name
-        self._override_src = collections.OrderedDict()
-        self._override_src_files = {}
+        self._node_list: list[_ChildNode] = []  # a list of unique ChildNodes
+        self._node_map: dict[int, str] = {}  # map of global node index to node name
+        self._override_src: OrderedDict[int, str] = collections.OrderedDict()
+        self._override_src_files: dict[int, str] = {}
         self._current_node = 1  # the current global node, must start at 1
         self._default_color = default_color
         self._override_color = func_override_color
-        self._graphviz_args_kwargs = {}
-        self.similarity_container = None
-        self.similarity_results = None
+        self._graphviz_args_kwargs: dict[str, Any] = {}
+        self.similarity_container: _similarity_container_types | None = None
+        self.similarity_results: dict[str, npt.NDArray[Any]]
         self.similarity_cutoff = similarity_cutoff
         if classes_to_exclude is None:
             classes_to_exclude = []
         self.classes_to_exclude = classes_to_exclude
         self._build()
-        self._node_map_r = {v: k for k, v in self._node_map.items()}  # name to index
+        self._node_map_r: dict[str, int] = {
+            v: k for k, v in self._node_map.items()
+        }  # name to index
 
     def _get_source_info(self, obj) -> Optional[str]:
-        f = getattr(obj, self.funcname)
-        if isinstance(f, collections.abc.Callable):
+        if self.funcname is None:
+            raise RuntimeError("this functionality requires function tracking.")
+        fname: str = self.funcname
+        f = getattr(obj, fname)
+        if isinstance(f, collections.abc.Callable):  # type: ignore[arg-type]
             return f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
         return None
 
@@ -157,8 +167,12 @@ class ClassGraphTree:
         # store the source code of funcname for the current class and node
         #    clss:  a class
         #    current_node: the
-        f = getattr(clss, self.funcname)
-        if isinstance(f, collections.abc.Callable):
+        if self.funcname is None:
+            raise RuntimeError("this functionality requires function tracking.")
+        fname: str = self.funcname
+
+        f = getattr(clss, fname)
+        if isinstance(f, collections.abc.Callable):  # type: ignore[arg-type]
             src = textwrap.dedent(inspect.getsource(f))
             self._override_src_files[current_node] = (
                 f"{inspect.getsourcefile(f)}:{inspect.getsourcelines(f)[1]}"
@@ -167,21 +181,28 @@ class ClassGraphTree:
 
     def check_source_similarity(
         self,
-        SimilarityContainer=PycodeSimilarity,
-        method="reference",
+        similarity_container_class: str = "PycodeSimilarity",
+        method: str = "reference",
         reference: Optional[int] = None,
     ):
         # compares all the source code of the child methods that have
         # over-ridden funcname
 
         if reference is None:
-            reference = 1  # use whatever the basenode is
+            ref = 1  # use whatever the basenode is
+        else:
+            ref = reference
 
-        self.similarity_container = SimilarityContainer(method=method)
-        sim = self.similarity_container.run(self._override_src, reference=reference)
+        if similarity_container_class == "PycodeSimilarity":
+            SimClass = PycodeSimilarity
+        else:
+            raise ValueError(f"unexpected value, {similarity_container_class=}")
+
+        self.similarity_container = SimClass(method=method)
+        sim = self.similarity_container.run(self._override_src, reference=ref)
         return sim
 
-    def _build(self):
+    def _build(self) -> None:
 
         # construct the first node
         color = self._get_baseclass_color()
@@ -201,11 +222,12 @@ class ClassGraphTree:
         # construct the full similarity matrix
         s_c = PycodeSimilarity(method="permute")
         _, sim_matrix, sim_axis = s_c.run(self._override_src)
-        sim_axis = np.array(sim_axis)
+        assert isinstance(sim_matrix, np.ndarray)
+        sim_axis_array = np.array(sim_axis)
         sim_axis_names = np.array([c.child_name for c in self._node_list])
         self.similarity_results = {
             "matrix": sim_matrix,
-            "axis": sim_axis,
+            "axis": sim_axis_array,
             "axis_names": sim_axis_names,
         }
 
@@ -216,9 +238,9 @@ class ClassGraphTree:
             rowvals = M[irow, :]
             indxs = np.where(rowvals >= cutoff_sim)[0]
             indxs = indxs[indxs != irow]  # these are matrix indeces
-            node_ids = sim_axis[indxs]
+            node_ids = sim_axis_array[indxs]
             if len(node_ids) > 0:
-                this_child = sim_axis[irow]
+                this_child = sim_axis_array[irow]
                 similarity_sets[this_child] = set(node_ids.tolist())
         self.similarity_sets = similarity_sets
 
@@ -292,7 +314,7 @@ class ClassGraphTree:
         ax: Optional[Axes] = None,
         colorbar: Optional[bool] = True,
         **kwargs,
-    ) -> Tuple[dict, Axes]:
+    ) -> tuple[dict[int, str], Axes]:
         """
         add the similarity plot to a matplotlib axis (or create a new one)
 
@@ -340,16 +362,16 @@ class ClassGraphTree:
         sim_labels = [
             self._node_list[cid - 1].child_name for cid in self._override_src.keys()
         ]
-        sim_labels = {lid: label for lid, label in enumerate(sim_labels)}
-        return sim_labels, ax
+        sim_labels_dict = {lid: label for lid, label in enumerate(sim_labels)}
+        return sim_labels_dict, ax
 
     def build_interactive_graph(
         self,
         include_similarity: bool = True,
-        node_style: dict = None,
-        edge_style: dict = None,
-        similarity_edge_style: dict = None,
-        override_node_color: Union[str, tuple] = None,
+        node_style: dict[str, Any] | None = None,
+        edge_style: dict[str, Any] | None = None,
+        similarity_edge_style: dict[str, Any] | None = None,
+        override_node_color: str | tuple[float, ...] | None = None,
         **kwargs,
     ) -> Network:
         """
@@ -454,14 +476,14 @@ class ClassGraphTree:
         network_wrapper.from_nx(grph)
         return network_wrapper
 
-    def get_source_code(self, node: Union[str, int]) -> str:
+    def get_source_code(self, node: int | str) -> str:
         """
         retrieve the source code of the comparison function for a
         specified node
 
         Parameters
         ----------
-        node: Union[str, int]
+        node: int
         the node to fetch the source code for
 
         Returns
@@ -469,19 +491,26 @@ class ClassGraphTree:
         str
         a string containing the source code for the node.
         """
-        if node in self._override_src:
-            return self._override_src[node]
+        node_id: int
+
+        if not isinstance(node, int) and not isinstance(node, str):
+            raise TypeError("Unexpected type for node")
+
+        if isinstance(node, int) and node in self._node_map:
+            node_id = node
         elif isinstance(node, str) and node in self._node_map_r:
             node_id = self._node_map_r[node]
-            if node_id in self._override_src:
-                return self._override_src[node_id]
-            else:
-                raise ValueError(
-                    f"node {node} does not override the " f"chosen function."
-                )
-        raise KeyError(f"Could not find node for {node}")
+        else:
+            raise ValueError(f"Could not find node for {node}")
 
-    def get_multiple_source_code(self, node_1: Union[str, int], *args) -> dict:
+        if node_id in self._override_src:
+            return self._override_src[node_id]
+        else:
+            raise ValueError(f"node {node} does not override the chosen function.")
+
+    def get_multiple_source_code(
+        self, node_1: int | str, *args
+    ) -> dict[int | str, str]:
         """
         Retrieve the source code for multiple nodes
 
@@ -515,11 +544,11 @@ class ClassGraphTree:
             display_code_compare(self)
 
 
-def _validate_color(clr, default_rgb_tuple: tuple) -> str:
+def _validate_color(clr, default_rgb_tuple: tuple[float, float, float]) -> str:
     if clr is None:
-        return rgb2hex(default_rgb_tuple)
+        return str(rgb2hex(default_rgb_tuple))
     elif isinstance(clr, tuple):
-        return rgb2hex(clr)
+        return str(rgb2hex(clr))
     elif isinstance(clr, str):
         return clr
     msg = f"clr has unexpected type: {type(clr)}"
