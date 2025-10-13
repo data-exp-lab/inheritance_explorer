@@ -5,7 +5,7 @@ repos:
     - id: black
       language_version: python3
 -   repo: https://github.com/PyCQA/isort
-    rev: '6.1.0'  # keep in sync with pyproject.toml
+    rev: '7.0.0'  # keep in sync with pyproject.toml
     hooks:
     -   id: isort
 -   repo: https://github.com/PyCQA/flake8
