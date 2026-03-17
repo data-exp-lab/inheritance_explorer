@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.3.0  # keep in sync with pyproject.toml
+    rev: 26.3.1  # keep in sync with pyproject.toml
     hooks:
     - id: black
       language_version: python3
